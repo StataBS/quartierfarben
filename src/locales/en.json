@@ -2,30 +2,30 @@
     "meta": {
         "description": "A map based tool to create a postcard showing the landuse distribution in your neighborhood"
     },
-    "description": "Here you can create a postcard showing the distribution of <span class='font-bold'>land use in your Vienna neighbourhood</span>. Simply move the map or search for a location. You can also change the text on the postcard.<br><br>Maps are always (partial) perspectives on reality. Here, too, we have summarised the data in advance. The map also only shows how land is used, but not by whom it can be used. It is therefore possible, for example, that some green or sports areas shown are not accessible to the public. Unfortunately, there is only very limited open data available on the public accessibility.",
+    "description": "Here you can create a postcard showing the distribution of <span class='font-bold'>land use in your neighbourhood of the Canton of Basel-Stadt</span>. Simply move the map or search for a location. You can also change the text on the postcard.<br><br>Maps are always (partial) perspectives on reality. Here, too, we have summarised the data in advance. The map also only shows how land is used, but not by whom it can be used. It is therefore possible, for example, that some green or sports areas shown are not accessible to the public.",
     "footer": {
-        "background": "Grätzlfarben was initially developed for Berlin under the name '<a class='underline' target='_blank' href='https://kiezcolors.odis-berlin.de/'>Kiezcolors</a>' by ODIS and CityLAB Berlin. The <a href='https://cartography.tuwien.ac.at/' class='underline' target='_blank'>Research Unit Cartography</a> at TU Wien adapted it for Vienna. You can find the code to this project on <a class='underline' target='_blank' href='https://github.com/ester-t-s/graetzlfarben'>GitHub.</a>",
-        "dataSources": "Data sources: <br> Realnutzungskartierung 2022: <a class='underline' target='_blank' href='https://www.data.gv.at/katalog/de/dataset/stadt-wien_realnutzungskartierungab200708wien'>CC BY 4.0 Stadt Wien</a> <br> Straßenkarte: © <a class='underline' target='_blank' href='https://openstreetmap.org'>OpenStreetMap Contributors</a>",
-        "imprint": "Imprint: <br> This is a research prototype – Data and functionality without warranty! Developed at the <a href='https://cartography.tuwien.ac.at/' class='underline' target='_blank'>Research Unit Cartography</a> at TU Wien, Wiedner Hauptstraße 8-10, 1040 Wien"
+        "background": "Quartierfarben was initially developed for Berlin under the name '<a class='underline' target='_blank' href='https://kiezcolors.odis-berlin.de/'>Kiezcolors</a>' by ODIS and CityLAB Berlin. The Research Unit Cartography at TU Wien adapted it for Vienna with '<a class='underline' target='_blank' href='https://cartolab.at/graetzlfarben/'>Grätzlfarben</a>'. The <a href='https://www.bs.ch/daten/databs/dcc' class='underline' target='_blank'>DCC Data Competence Center</a> of the Statistical Office of the Canton Basel-Stadt reused the project for its own Canton. The code for this project can by found on <a class='underline' target='_blank' href='https://github.com/opendatabs/quartierfarben'>GitHub.</a>",
+        "dataSources": "Data sources: <br> Bodenbedeckung: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Bodenbedeckung&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte'>CC BY 4.0 + OpenStreetMap Kanton Basel-Stadt</a> <br> Strassenkarte: © <a class='underline' target='_blank' href='https://openstreetmap.org'>OpenStreetMap Contributors</a>",
+        "imprint": "Imprint: <br> This is a prototype – Data and functionality without warranty! Developed at the <a href='https://statistik.bs.ch/' class='underline' target='_blank'>Statistical Office of the Canton Basel-Stadt</a>"
     },
     "inputs": {
-        "search": "search for a place in Vienna",
+        "search": "search for a place in Basel-Stadt",
         "noSearchResults": "No results"
     },
     "buttons": {
         "downloadFront": "Download",
         "downloadBack": "Download backside",
-        "printFront": "Drucken"
+        "printFront": "Print"
     },
     "postcard": {
         "front": {
             "title": "Your text here",
-            "footer": "cartolab.at/graetzlfarben"
+            "footer": "opendatabs.github.io/quartierfarben/"
         },
         "back": {
-            "description": "How much space do we really need to live, move around, and breathe freely?$Fair use of space in cities can lead to happier, healthier lives. Visit cartolab.at/graetzlfarben to explore how space is distributed in your neighborhood,",
+            "description": "How much space do we really need to live, move around, and breathe freely?$Fair use of space in cities can lead to happier, healthier lives. Visit opendatabs.github.io/quartierfarben/ to explore how space is distributed in your neighborhood,",
             "greetings": "With best regards!",
-            "footer": "You can see the area distribution in an {analysisRadiusInMeters} metre radius. Made possible by open administrative data from the City of Vienna and the open source project Kiezcolors from ODIS Berlin. Adapted by the cartography research group at TU Vienna."
+            "footer": "You can see the area distribution in an {analysisRadiusInMeters} metre radius. Made possible by open administrative data from the Canton Basel-Stadt and the open source project Kiezcolors from ODIS Berlin and Grätzlfarben from TU Vienna."
         }
     },
     "map": {
