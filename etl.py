@@ -1,0 +1,407 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "geopandas==1.1.1",
+#     "marimo",
+#     "numpy==2.2.6",
+#     "owslib==0.34.1",
+#     "pandas==2.3.3",
+#     "shapely==2.1.2",
+# ]
+# ///
+
+import marimo
+
+__generated_with = "0.16.4"
+app = marimo.App(width="medium", auto_download=["html"])
+
+
+@app.cell
+def _():
+    import marimo as mo
+    from owslib.wfs import WebFeatureService
+    import geopandas as gpd
+    import pandas as pd
+    import numpy as np
+    import io
+    import logging
+    return WebFeatureService, gpd, io, logging, mo, np, pd
+
+
+@app.cell
+def _(WebFeatureService, gpd, io, logging, pd):
+    def load_data_from_wfs(url_wfs, shapes_to_load=None, prefix=None):
+        """
+        Load multiple layers from a WFS.
+
+        Args:
+            url_wfs (str): WFS service URL
+            shapes_to_load (list[str]): Explicit list of layers to fetch
+            prefix (str): If given, load all layers starting with this prefix
+        """
+        logging.info(f"Connecting to WFS at {url_wfs}")
+        wfs = WebFeatureService(url=url_wfs, version="2.0.0", timeout=120)
+
+        # auto-discover layers if prefix is given
+        if prefix:
+            shapes_to_load = [
+                name for name in list(wfs.contents)
+                if name.startswith(prefix)
+            ]
+            logging.info(f"Discovered {len(shapes_to_load)} layers with prefix '{prefix}'")
+
+        if not shapes_to_load:
+            raise ValueError("No shapes_to_load provided and no prefix matched any layers.")
+
+        gdf_combined = gpd.GeoDataFrame()
+
+        for shapefile in shapes_to_load:
+            logging.info(f"Fetching data for layer: {shapefile}")
+            try:
+                response = wfs.getfeature(typename=shapefile)
+                gdf = gpd.read_file(io.BytesIO(response.read()))
+                gdf_combined = pd.concat([gdf_combined, gdf], ignore_index=True)
+            except Exception as e:
+                logging.error(f"Failed to fetch layer {shapefile}: {e}")
+
+        return gdf_combined
+    return (load_data_from_wfs,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    # Load Data
+
+    For more information on how to load data from WFS, see this page [Geodienste - Kanton Basel-Stadt](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/geodienste#wfsbs)
+    """
+    )
+    return
+
+
+@app.cell
+def _():
+    url_wfs = "https://wfs.geo.bs.ch/"
+    return (url_wfs,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Load [Bodenbedeckungen](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Bodenbedeckung&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte)""")
+    return
+
+
+@app.cell
+def _(load_data_from_wfs, url_wfs):
+    gdf_bodenbedeckung = load_data_from_wfs(url_wfs, prefix="ms:BS_Bodenbedeckungen")
+    gdf_bodenbedeckung
+    return (gdf_bodenbedeckung,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Load [Gebäudekategorien](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Geb%C3%A4udeinformationen&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Geb%C3%A4udeinformationen=DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie)""")
+    return
+
+
+@app.cell
+def _(load_data_from_wfs, url_wfs):
+    gdf_gebaeudekategorie = load_data_from_wfs(url_wfs, shapes_to_load=['DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie'])
+    gdf_gebaeudekategorie
+    return (gdf_gebaeudekategorie,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Load [Öffentlicher Raum](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=%C3%96ffentlicher%20Raum&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_%C3%96ffentlicher%20Raum=OR_OeffentlicherRaum)""")
+    return
+
+
+@app.cell
+def _(load_data_from_wfs, url_wfs):
+    gdf_oeffentlicher_raum = load_data_from_wfs(url_wfs, shapes_to_load=['OR_OeffentlicherRaum_Allmend', 'OR_OeffentlicherRaum_Noerg'])
+    gdf_oeffentlicher_raum
+    return (gdf_oeffentlicher_raum,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""# Transform and Merge Date""")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Merge Gebäude from Bodenbedeckungen with Gebäudekategorie""")
+    return
+
+
+@app.cell
+def _(gdf_bodenbedeckung, gdf_gebaeudekategorie):
+    bb = gdf_bodenbedeckung.copy()
+    gk = gdf_gebaeudekategorie.copy()
+
+    # Filter
+    buildings = bb[bb["bs_art_txt"] == "Gebaeude.Gebaeude"].copy()
+    gk = gk[["gebaeudekategorieid", "geometry"]]
+
+    buildings, gk
+    return bb, buildings, gk
+
+
+@app.cell
+def _(buildings, gk, gpd):
+    # predicate: 'intersects' is robust; if geometries should be strictly within, use 'within'
+    joined = gpd.sjoin(buildings, gk, how="left", predicate="intersects")
+
+    joined
+    return (joined,)
+
+
+@app.cell
+def _(joined):
+    required = {"gml_id", "gebaeudekategorieid"}
+    missing = required - set(joined.columns)
+    if missing:
+        print(f"'joined' is missing required columns: {missing}")
+
+    # Any building mapped to >1 distinct category?
+    per_bldg_ncats = joined.groupby("gml_id")["gebaeudekategorieid"].nunique(dropna=True)
+    ambiguous_ids = per_bldg_ncats[per_bldg_ncats > 1].index.tolist()
+
+    print("Found ambiguous ids (building mapped to >1 distinct category)")
+    # Show concise report of the ambiguous ones, then stop (no merge)
+    ambiguous_buildings = (
+        joined.loc[joined["gml_id"].isin(ambiguous_ids), ["gml_id", "gebaeudekategorieid"]]
+        .drop_duplicates()
+        .sort_values(["gml_id", "gebaeudekategorieid"])
+        .reset_index(drop=True)
+    )
+    ambiguous_buildings
+    return (ambiguous_ids,)
+
+
+@app.cell
+def _(ambiguous_ids, buildings, gk, gpd, joined, np, pd):
+    if not len(ambiguous_ids):
+        amb_best = pd.DataFrame(columns=["gml_id", "gebaeudekategorieid", "pct_bldg"])
+        amb_stats = {
+            "ambiguous_buildings": 0,
+            "with_overlay_match": 0,
+            "no_overlay_match": 0,
+            "pct_bldg_summary_pct": {"min": None, "median": None, "max": None},
+        }
+        amb_stats, amb_best
+
+    # Limit to ambiguous buildings and the categories they touched in the join
+    amb_bldgs = buildings.loc[buildings["gml_id"].isin(ambiguous_ids), ["gml_id", "geometry"]].copy()
+    cats_needed = (
+        joined.loc[joined["gml_id"].isin(ambiguous_ids), "gebaeudekategorieid"]
+        .dropna().unique().tolist()
+    )
+    gk_sub = gk.loc[gk["gebaeudekategorieid"].isin(cats_needed), ["gebaeudekategorieid", "geometry"]].copy()
+
+    inter = gpd.overlay(amb_bldgs, gk_sub, how="intersection")
+    inter = inter[inter.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+
+
+    # Percent of each building covered by the intersected category
+    bldg_area = amb_bldgs.assign(bldg_area=amb_bldgs.geometry.area)[["gml_id", "bldg_area"]]
+    inter = inter.merge(bldg_area, on="gml_id", how="left")
+    inter["int_area"] = inter.geometry.area
+    inter["pct_bldg"] = np.where(inter["bldg_area"] > 0, inter["int_area"] / inter["bldg_area"] * 100.0, np.nan)
+
+    # Choose, per building, the category with the largest percent overlap
+    best_idx = inter.groupby("gml_id")["pct_bldg"].idxmax()
+    amb_best = inter.loc[best_idx, ["gml_id", "gebaeudekategorieid", "pct_bldg"]].reset_index(drop=True)
+
+    resolved_set = set(amb_best["gml_id"])
+    unresolved = sorted(set(ambiguous_ids) - resolved_set)
+
+    # Percentage stats (on resolved ambiguous)
+    pct = amb_best["pct_bldg"]
+    amb_stats = {
+        "ambiguous_buildings": len(ambiguous_ids),
+        "with_overlay_match": len(resolved_set),
+        "no_overlay_match": len(unresolved),
+        "pct_bldg_summary_pct": {
+            "min": float(np.nanmin(pct)) if len(pct) else None,
+            "median": float(np.nanmedian(pct)) if len(pct) else None,
+            "max": float(np.nanmax(pct)) if len(pct) else None,
+        },
+    }
+
+    amb_stats, amb_best
+    return (amb_best,)
+
+
+@app.cell
+def _(amb_best, ambiguous_ids, gdf_bodenbedeckung, joined, pd):
+    # Unambiguous mapping straight from the spatial join
+    mapping_unamb = (
+        joined.loc[~joined["gml_id"].isin(ambiguous_ids), ["gml_id", "gebaeudekategorieid"]]
+        .dropna(subset=["gebaeudekategorieid"])
+        .drop_duplicates(subset=["gml_id"])
+    )
+    # Ambiguous resolved by largest intersection
+    mapping_amb = amb_best.loc[:, ["gml_id", "gebaeudekategorieid"]]
+
+    mapping_final = (
+        pd.concat([mapping_unamb, mapping_amb], ignore_index=True)
+        .drop_duplicates(subset=["gml_id"], keep="last")
+    )
+
+    gdf_bodenbedeckung_cat = gdf_bodenbedeckung.merge(mapping_final, on="gml_id", how="left")
+
+    stats_final = {
+        "joined_buildings_total": int(joined["gml_id"].nunique()),
+        "mapped_unambiguous": int(mapping_unamb["gml_id"].nunique()),
+        "mapped_ambiguous": int(mapping_amb["gml_id"].nunique()),
+        "mapped_total": int(mapping_final["gml_id"].nunique()),
+    }
+
+    stats_final, gdf_bodenbedeckung_cat
+    return (gdf_bodenbedeckung_cat,)
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Compute öffentlicher Raum for the remaining "befestigte".""")
+    return
+
+
+@app.cell
+def _(bb, gdf_oeffentlicher_raum, gpd, np, pd):
+    # percent area threshold to call something "öffentlicher Raum"
+    PCT_THRESHOLD = 50
+
+    oraw = gdf_oeffentlicher_raum.copy()
+
+    # target subset
+    tgt = bb[bb["bs_art_txt"] == "befestigt.uebrige_befestigte.uebrige_befestigte"].copy()
+
+    # light geometry healing
+    try:
+        from shapely.validation import make_valid
+        tgt["geometry"]  = tgt.geometry.apply(make_valid)
+        oraw["geometry"] = oraw.geometry.apply(make_valid)
+    except Exception:
+        tgt["geometry"]  = tgt.geometry.buffer(0)
+        oraw["geometry"] = oraw.geometry.buffer(0)
+
+    # areas
+    tgt["area"] = tgt.geometry.area
+
+    # dissolve all public-space shapes into one geometry
+    public = oraw[["geometry"]].dissolve()  # single row
+    public = gpd.GeoDataFrame(public, geometry="geometry", crs=oraw.crs).reset_index(drop=True)
+
+    # polygonal intersections
+    inter_oeffentlicher_raum = gpd.overlay(tgt[["gml_id", "geometry", "area"]], public, how="intersection")
+    inter_oeffentlicher_raum = inter_oeffentlicher_raum[inter_oeffentlicher_raum.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+
+    if inter_oeffentlicher_raum.empty:
+        coverage = pd.DataFrame({"gml_id": tgt["gml_id"].unique(), "public_area": 0.0})
+    else:
+        inter_oeffentlicher_raum["int_area"] = inter_oeffentlicher_raum.geometry.area
+        coverage = (
+            inter_oeffentlicher_raum.groupby("gml_id", as_index=False)["int_area"]
+            .sum()
+            .rename(columns={"int_area": "public_area"})
+        )
+
+    coverage = coverage.merge(tgt[["gml_id", "area"]], on="gml_id", how="right")
+    coverage["public_area"] = coverage["public_area"].fillna(0.0)
+    coverage["oeffentlicher_raum_pct"] = np.where(
+        coverage["area"] > 0,
+        coverage["public_area"] / coverage["area"] * 100.0,
+        0.0
+    )
+
+    # labels
+    coverage["oeffentlicher Raum"] = np.where(
+        coverage["oeffentlicher_raum_pct"] >= PCT_THRESHOLD,
+        "öffentlicher Raum",
+        "kein öffentlicher Raum"
+    )
+
+    # quick stats
+    n_total  = int(tgt["gml_id"].nunique())
+    n_public = int((coverage["oeffentlicher Raum"] == "öffentlicher Raum").sum())
+    stats = {
+        "threshold_pct": PCT_THRESHOLD,
+        "total_befestigt_uebrige": n_total,
+        "öffentlicher_Raum": {"count": n_public, "pct": round(100.0 * n_public / max(n_total, 1), 2)},
+        "kein_öffentlicher_Raum": {
+            "count": n_total - n_public,
+            "pct": round(100.0 * (n_total - n_public) / max(n_total, 1), 2),
+        },
+    }
+
+    coverage, stats
+    return (coverage,)
+
+
+@app.cell
+def _(coverage, gdf_bodenbedeckung_cat):
+    cols = ["gml_id", "oeffentlicher Raum", "oeffentlicher_raum_pct"]
+    gdf_all = gdf_bodenbedeckung_cat.merge(coverage[cols], on="gml_id", how="left")
+
+    gdf_all
+    return (gdf_all,)
+
+
+@app.cell
+def _(gdf_all, pd):
+    gdf = gdf_all.copy()
+
+    code2de = {
+        "1010": "Provisorische Unterkunft",
+        "1020": "Gebäude ausschliesslich für Wohnnutzung",
+        "1021": "Einfamilienhaus, ohne Nebennutzung",
+        "1025": "Mehrfamilienhaus, ohne Nebennutzung",
+        "1030": "Wohngebäude mit Nebennutzung",
+        "1040": "Gebäude mit teilweiser Wohnnutzung",
+        "1060": "Gebäude ohne Wohnnutzung",
+        "1080": "Sonderbau",
+    }
+
+    TARGET_BB = "befestigt.uebrige_befestigte.uebrige_befestigte"
+    COL_OR = "oeffentlicher Raum"
+    COL_CODE = "gebaeudekategorieid"
+
+    # Fallback from bs_art_txt: "." -> " - ", "_" -> " "
+    def clean_bs_art(s):
+        if pd.isna(s): return None
+        s = str(s)
+        return s.replace(".", " - ").replace("_", " ")
+
+    # normalize codes to strings without decimals
+    def norm_code(x):
+        if pd.isna(x): return None
+        if isinstance(x, (int,)): return str(x)
+        if isinstance(x, float):  return str(int(x))
+        return str(x).strip()
+
+    # start with fallback from bs_art_txt
+    gdf["nutzung"] = gdf["bs_art_txt"].map(clean_bs_art)
+
+    # Gebäude mapping (overrides)
+    gdf["_code"] = gdf[COL_CODE].apply(norm_code) if COL_CODE in gdf.columns else None
+    has_code = gdf["_code"].notna() if COL_CODE in gdf.columns else pd.Series(False, index=gdf.index)
+    gdf.loc[has_code, "nutzung"] = "Gebäude - " + gdf.loc[has_code, "_code"].map(lambda c: code2de.get(c, c))
+
+    # Öffentlicher Raum for TARGET_BB (overrides fallback, but not Gebäude)
+    if COL_OR in gdf.columns:
+        mask_ps = (gdf["bs_art_txt"] == TARGET_BB) & gdf[COL_OR].notna() & ~has_code
+        gdf.loc[mask_ps, "nutzung"] = "befestigt - uebrige befestigte - " + gdf.loc[mask_ps, COL_OR].astype(str)
+
+    gdf = gdf.drop(columns=[c for c in ["_code"] if c in gdf.columns])
+    gdf.to_file("landuse.geojson", driver="GeoJSON", layer='landuse-data')
+    gdf
+    return
+
+
+if __name__ == "__main__":
+    app.run()

@@ -1,0 +1,65 @@
+name: Build landuse tiles
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-tiles:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Run ETL (marimo script)
+        run: uv run etl.py
+
+      - name: Install tippecanoe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tippecanoe
+
+      - name: Generate tiles
+        run: |
+          mkdir -p static/tiles
+          rm -rf static/tiles/*
+          tippecanoe \
+            --output-to-directory ./static/tiles \
+            --layer landuse-data \
+            --force --no-tile-compression \
+            --minimum-zoom=12 --maximum-zoom=17 \
+            --full-detail=17 --low-detail=12 \
+            --no-tiny-polygon-reduction \
+            --detect-shared-borders \
+            --extend-zooms-if-still-dropping \
+            --no-feature-limit --no-tile-size-limit \
+            ./landuse.geojson
+
+      - name: Commit and push tiles (if changed)
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain static/tiles)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A static/tiles
+            git commit -m "Update tiles ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+            git push
+          else
+            echo "No tile changes to commit."
+          fi
