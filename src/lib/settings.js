@@ -71,7 +71,7 @@ export let categories = {
     sports: { color: "#E8D569", name_en: "Sports", name: "Sport" },
     education: { color: "#758EBA", name_en: "Education", name: "Schule und Bildung" },
     public_space: { color: "#665B44", name_en: "other Public Space", name: "sonstiger öffentlicher Raum" },
-    other: { color: "#FFFFFF", name_en: "Other", name: "Sonstiges" },
+    other: { color: "#D3D3D3", name_en: "Other", name: "Sonstiges" }
 };
 
 // Basel landuses → categories (names match your inputs verbatim)
@@ -87,14 +87,14 @@ export let landuses = {
     "humusiert - Intensivkultur - uebrige Intensivkultur":  { category: "greenspace"},
     "humusiert - uebrige humusierte - uebrige humusierte": { category: "greenspace"},
     "Gebaeude - Gebaeude": { category: "building"},
-    "Gebaeude - Provisorische Unterkunft": { category: "living"},
-    "Gebaeude - Gebäude ausschliesslich für Wohnnutzung": { category: "living"},
-    "Gebaeude - Einfamilienhaus, ohne Nebennutzung" : { category: "living"},
-    "Gebaeude - Mehrfamilienhaus, ohne Nebennutzung" : { category: "living"},
-    "Gebaeude - Wohngebäude mit Nebennutzung": { category: "living"},
-    "Gebaeude - Gebäude mit teilweiser Wohnnutzung": { category: "living"},
-    "Gebaeude - Gebäude ohne Wohnnutzung": { category: "building"},
-    "Gebaeude - Sonderbau": { category: "building"},
+    "Gebäude - Provisorische Unterkunft": { category: "living"},
+    "Gebäude - Gebäude ausschliesslich für Wohnnutzung": { category: "living"},
+    "Gebäude - Einfamilienhaus, ohne Nebennutzung" : { category: "living"},
+    "Gebäude - Mehrfamilienhaus, ohne Nebennutzung" : { category: "living"},
+    "Gebäude - Wohngebäude mit Nebennutzung": { category: "living"},
+    "Gebäude - Gebäude mit teilweiser Wohnnutzung": { category: "living"},
+    "Gebäude - Gebäude ohne Wohnnutzung": { category: "building"},
+    "Gebäude - Sonderbau": { category: "building"},
     "befestigt - uebrige befestigte - öffentlicher Raum": { category: "public_space"},
     "befestigt - uebrige befestigte - kein öffentlicher Raum": { category: "other"},
     "befestigt - Strasse Weg": { category: "street"},
