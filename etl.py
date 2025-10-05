@@ -508,6 +508,8 @@ def _(gdf_all, pd):
         gdf.loc[mask_ps, "nutzung"] = "befestigt - uebrige befestigte - " + gdf.loc[mask_ps, COL_OR].astype(str)
 
     gdf = gdf.drop(columns=[c for c in ["_code"] if c in gdf.columns])
+    if gdf.crs is None:
+        gdf = gdf.set_crs(2056)
     gdf = gdf.to_crs(4326)
     gdf.to_file("landuse.geojson", driver="GeoJSON", layer='landuse-data')
     gdf
