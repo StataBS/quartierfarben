@@ -6,7 +6,9 @@
 #     "numpy==2.2.6",
 #     "owslib==0.34.1",
 #     "pandas==2.3.3",
+#     "requests==2.32.5",
 #     "shapely==2.1.2",
+#     "urllib3==2.5.0",
 # ]
 # ///
 
@@ -19,50 +21,147 @@ app = marimo.App(width="medium", auto_download=["html"])
 @app.cell
 def _():
     import marimo as mo
+    import requests
     from owslib.wfs import WebFeatureService
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
     import geopandas as gpd
     import pandas as pd
     import numpy as np
-    import io
-    import logging
-    return WebFeatureService, gpd, io, logging, mo, np, pd
+    import io, time, random, json
+    return (
+        HTTPAdapter,
+        Retry,
+        WebFeatureService,
+        gpd,
+        io,
+        json,
+        mo,
+        np,
+        pd,
+        random,
+        requests,
+        time,
+    )
 
 
 @app.cell
-def _(WebFeatureService, gpd, io, logging, pd):
-    def load_data_from_wfs(url_wfs, shapes_to_load=None, prefix=None):
-        """
-        Load multiple layers from a WFS.
+def _(HTTPAdapter, Retry, requests):
+    def retry_session(total=8, backoff=1.5, ua="landuse-etl/1.0 (+github-actions)"):
+        r = Retry(
+            total=total, connect=total, read=total,
+            backoff_factor=backoff,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=frozenset(["GET", "POST"]),
+            raise_on_status=False,
+        )
+        s = requests.Session()
+        s.headers.update({"User-Agent": ua})
+        a = HTTPAdapter(max_retries=r, pool_connections=10, pool_maxsize=10)
+        s.mount("https://", a); s.mount("http://", a)
+        return s
+    return (retry_session,)
 
-        Args:
-            url_wfs (str): WFS service URL
-            shapes_to_load (list[str]): Explicit list of layers to fetch
-            prefix (str): If given, load all layers starting with this prefix
-        """
-        logging.info(f"Connecting to WFS at {url_wfs}")
-        wfs = WebFeatureService(url=url_wfs, version="2.0.0", timeout=120)
 
-        # auto-discover layers if prefix is given
+@app.cell
+def _(gpd, io, json):
+    def getfeature_geojson(session, url, typename, srs="EPSG:2056", timeout=120):
+        # try common GeoJSON output formats in order
+        for fmt in ("application/json; subtype=geojson", "application/json", "json", "geojson"):
+            params = {
+                "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                "typenames": typename, "outputFormat": fmt, "srsName": srs
+            }
+            resp = session.get(url, params=params, timeout=timeout)
+            if resp.ok and resp.content:
+                # try JSON parse first
+                try:
+                    gj = resp.json()
+                    # If it's FeatureCollection, load via from_features
+                    if isinstance(gj, dict) and gj.get("type") == "FeatureCollection":
+                        return gpd.GeoDataFrame.from_features(gj, crs=None)
+                except json.JSONDecodeError:
+                    pass
+                # fallback: let fiona parse from bytes (works for GeoJSON too)
+                try:
+                    return gpd.read_file(io.BytesIO(resp.content))
+                except Exception:
+                    continue  # try next format
+        raise RuntimeError("GeoJSON fetch failed for all formats")
+    return (getfeature_geojson,)
+
+
+@app.cell
+def _(
+        WebFeatureService,
+        getfeature_geojson,
+        gpd,
+        io,
+        pd,
+        random,
+        retry_session,
+        time,
+):
+    def load_data_from_wfs(url_wfs, shapes_to_load=None, prefix=None, *, sleep_min=0.3, sleep_max=0.8):
+        """
+        Robust WFS loader:
+          - Uses OWSLib for capabilities (no session arg).
+          - Uses requests+retries for GetFeature (GeoJSON first, then GML fallback).
+        Returns: (GeoDataFrame, failed_layers)
+        """
+        print(f"Connecting to WFS at {url_wfs}")
+
+        # Capabilities with a few manual retries (OWSLib only)
+        last_exc = None
+        for i in range(3):
+            try:
+                wfs = WebFeatureService(url=url_wfs, version="2.0.0", timeout=120)
+                contents = list(wfs.contents)
+                print(f"Capabilities loaded; {len(contents)} layers advertised.")
+                break
+            except Exception as e:
+                last_exc = e
+                wait = (i + 1) * 5
+                print(f"GetCapabilities failed (try {i+1}/3): {e} — retrying in {wait}s")
+                time.sleep(wait)
+        else:
+            raise RuntimeError(f"Failed to load WFS capabilities: {last_exc}")
+
+        # Auto-discover by prefix
         if prefix:
-            shapes_to_load = [
-                name for name in list(wfs.contents)
-                if name.startswith(prefix)
-            ]
-            logging.info(f"Discovered {len(shapes_to_load)} layers with prefix '{prefix}'")
+            shapes_to_load = [name for name in contents if name.startswith(prefix)]
+            print(f"Discovered {len(shapes_to_load)} layers with prefix '{prefix}'")
 
         if not shapes_to_load:
             raise ValueError("No shapes_to_load provided and no prefix matched any layers.")
 
+        sess = retry_session()
         gdf_combined = gpd.GeoDataFrame()
+        failed_layers = []
 
-        for shapefile in shapes_to_load:
-            logging.info(f"Fetching data for layer: {shapefile}")
+        for typename in shapes_to_load:
+            print(f"Fetching layer: {typename}")
             try:
-                response = wfs.getfeature(typename=shapefile)
-                gdf = gpd.read_file(io.BytesIO(response.read()))
+                time.sleep(random.uniform(sleep_min, sleep_max))  # be polite
+
+                # 1) Try GeoJSON via requests (fastest to parse, resilient)
+                try:
+                    gdf = getfeature_geojson(sess, url_wfs, typename)
+                except Exception:
+                    # 2) Fallback: OWSLib GetFeature (likely GML)
+                    resp = wfs.getfeature(typename=typename)
+                    gdf = gpd.read_file(io.BytesIO(resp.read()))
+
                 gdf_combined = pd.concat([gdf_combined, gdf], ignore_index=True)
+
             except Exception as e:
-                logging.error(f"Failed to fetch layer {shapefile}: {e}")
+                print(f"ERROR: Failed to fetch {typename}: {e}")
+                failed_layers.append(typename)
+
+        if failed_layers:
+            print(f"Completed with {len(failed_layers)} failure(s): {failed_layers}")
+        else:
+            print("Completed all layers successfully.")
 
         return gdf_combined
     return (load_data_from_wfs,)
