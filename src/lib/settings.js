@@ -66,7 +66,7 @@ export let categories = {
     rail: { color: "#898989", name_en: "Rail", name: "Bahn" },
     water: { color: "#D0E4DE", name_en: "Water", name: "Wasser" },
     greenspace: { color: "#92BA95", name_en: "Nature", name: "Grünflächen" },
-    industry: { color: "#B68B3A", name_en: "Economy", name: "Wirtschaft" },
+    industry: { color: "#B68B3A", name_en: "Industrial Area", name: "Industrieareal" },
     leisure: { color: "#8B515C", name_en: "Culture and Leisure", name: "Kultur und Freizeit" },
     sports: { color: "#E8D569", name_en: "Sports", name: "Sport" },
     education: { color: "#758EBA", name_en: "Education", name: "Schule und Bildung" },
