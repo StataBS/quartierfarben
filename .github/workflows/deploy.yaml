@@ -1,6 +1,9 @@
 name: Deploy SvelteKit to GitHub Pages
 
 on:
+  workflow_run:
+    workflows: ["Build landuse tiles"]
+    types: [completed]
   push:
     branches: [ main ]
   workflow_dispatch:
