@@ -57,11 +57,12 @@ export const mapMaxZoom = 17;
 export const analysisRadiusInMeters = 250;
 
 // Landuse tiles settings
-export const landuseFieldname = "bs_art_txt";
+export const landuseFieldname = "nutzung";
 
 export let categories = {
-    street: { color: "#3A3838", name_en: "Street", name: "Strassen" },
-    living: { color: "#F0BD9F", name_en: "Building", name: "Gebäude" },
+    street: { color: "#3A3838", name_en: "Streets & Ways", name: "Strassen & Wege" },
+    living: { color: "#F0BD9F", name_en: "Living", name: "Wohnen" },
+    building: { color: "#C4C4C4", name_en: "other buildings", name: "sonstige Gebäude" },
     rail: { color: "#898989", name_en: "Rail", name: "Bahn" },
     water: { color: "#D0E4DE", name_en: "Water", name: "Wasser" },
     greenspace: { color: "#92BA95", name_en: "Nature", name: "Grünflächen" },
@@ -69,7 +70,8 @@ export let categories = {
     leisure: { color: "#8B515C", name_en: "Culture and Leisure", name: "Kultur und Freizeit" },
     sports: { color: "#E8D569", name_en: "Sports", name: "Sport" },
     education: { color: "#758EBA", name_en: "Education", name: "Schule und Bildung" },
-    infrastructure: { color: "#665B44", name_en: "Infrastructure", name: "Infrastruktur" },
+    public_space: { color: "#665B44", name_en: "other Public Space", name: "sonstiger öffentlicher Raum" },
+    other: { color: "#FFFFFF", name_en: "Other", name: "Sonstiges" },
 };
 
 // Basel landuses → categories (names match your inputs verbatim)
@@ -84,14 +86,23 @@ export let landuses = {
     "humusiert - Intensivkultur - Reben":  { category: "greenspace"},
     "humusiert - Intensivkultur - uebrige Intensivkultur":  { category: "greenspace"},
     "humusiert - uebrige humusierte - uebrige humusierte": { category: "greenspace"},
-    "Gebaeude - Gebaeude": { category: "living"},
-    "befestigt - uebrige befestigte - uebrige befestigte": { category: "infrastructure"},
+    "Gebaeude - Gebaeude": { category: "building"},
+    "Gebaeude - Provisorische Unterkunft": { category: "living"},
+    "Gebaeude - Gebäude ausschliesslich für Wohnnutzung": { category: "living"},
+    "Gebaeude - Einfamilienhaus, ohne Nebennutzung" : { category: "living"},
+    "Gebaeude - Mehrfamilienhaus, ohne Nebennutzung" : { category: "living"},
+    "Gebaeude - Wohngebäude mit Nebennutzung": { category: "living"},
+    "Gebaeude - Gebäude mit teilweiser Wohnnutzung": { category: "living"},
+    "Gebaeude - Gebäude ohne Wohnnutzung": { category: "building"},
+    "Gebaeude - Sonderbau": { category: "building"},
+    "befestigt - uebrige befestigte - öffentlicher Raum": { category: "public_space"},
+    "befestigt - uebrige befestigte - kein öffentlicher Raum": { category: "other"},
     "befestigt - Strasse Weg": { category: "street"},
     "humusiert - Acker Wiese Weide": { category: "greenspace"},
     "befestigt - Verkehrsinsel": { category: "street"},
     "Gewaesser - stehendes": { category: "water"},
     "humusiert - Gartenanlage - Friedhof": { category: "greenspace"},
-    "humusiert - Gartenanlage - Tierpark": { category: "leisure"},
+    "humusiert - Gartenanlage - Tierpark": { category: "greenspace"},
     "humusiert - Gartenanlage - Parkanlage Spielplatz": { category: "greenspace"},
     "humusiert - Gartenanlage - Schrebergarten": { category: "greenspace"},
     "humusiert - Gartenanlage - Sportanlage humusiert": { category: "sports"},
@@ -100,6 +111,6 @@ export let landuses = {
     "bestockt - geschlossener Wald": { category: "greenspace"},
     "befestigt - Wasserbecken": { category: "water"},
     "befestigt - uebrige befestigte - Fabrikareal": { category: "industry"},
-    "Gebaeude - Tank": { category: "infrastructure"},
+    "Gebaeude - Tank": { category: "industry"},
     "Gewaesser - fliessendes": { category: "water"},
 };
