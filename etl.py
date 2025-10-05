@@ -28,6 +28,7 @@ def _():
     import geopandas as gpd
     import pandas as pd
     import numpy as np
+    import logging
     import io, time, random, json
     return (
         HTTPAdapter,
@@ -36,6 +37,7 @@ def _():
         gpd,
         io,
         json,
+        logging,
         mo,
         np,
         pd,
@@ -43,6 +45,13 @@ def _():
         requests,
         time,
     )
+
+
+@app.cell
+def _(logging):
+    logging.basicConfig(level=logging.DEBUG)
+    logging.info(f"Executing {__file__}...")
+    return
 
 
 @app.cell
@@ -97,6 +106,7 @@ def _(
         getfeature_geojson,
         gpd,
         io,
+        logging,
         pd,
         random,
         retry_session,
@@ -109,7 +119,7 @@ def _(
           - Uses requests+retries for GetFeature (GeoJSON first, then GML fallback).
         Returns: (GeoDataFrame, failed_layers)
         """
-        print(f"Connecting to WFS at {url_wfs}")
+        logging.info(f"Connecting to WFS at {url_wfs}")
 
         # Capabilities with a few manual retries (OWSLib only)
         last_exc = None
@@ -117,12 +127,12 @@ def _(
             try:
                 wfs = WebFeatureService(url=url_wfs, version="2.0.0", timeout=120)
                 contents = list(wfs.contents)
-                print(f"Capabilities loaded; {len(contents)} layers advertised.")
+                logging.info(f"Capabilities loaded; {len(contents)} layers advertised.")
                 break
             except Exception as e:
                 last_exc = e
                 wait = (i + 1) * 5
-                print(f"GetCapabilities failed (try {i+1}/3): {e} — retrying in {wait}s")
+                logging.error(f"GetCapabilities failed (try {i+1}/3): {e} — retrying in {wait}s")
                 time.sleep(wait)
         else:
             raise RuntimeError(f"Failed to load WFS capabilities: {last_exc}")
@@ -130,7 +140,7 @@ def _(
         # Auto-discover by prefix
         if prefix:
             shapes_to_load = [name for name in contents if name.startswith(prefix)]
-            print(f"Discovered {len(shapes_to_load)} layers with prefix '{prefix}'")
+            logging.info(f"Discovered {len(shapes_to_load)} layers with prefix '{prefix}'")
 
         if not shapes_to_load:
             raise ValueError("No shapes_to_load provided and no prefix matched any layers.")
@@ -140,7 +150,7 @@ def _(
         failed_layers = []
 
         for typename in shapes_to_load:
-            print(f"Fetching layer: {typename}")
+            logging.info(f"Fetching layer: {typename}")
             try:
                 time.sleep(random.uniform(sleep_min, sleep_max))  # be polite
 
@@ -155,13 +165,13 @@ def _(
                 gdf_combined = pd.concat([gdf_combined, gdf], ignore_index=True)
 
             except Exception as e:
-                print(f"ERROR: Failed to fetch {typename}: {e}")
+                logging.error(f"ERROR: Failed to fetch {typename}: {e}")
                 failed_layers.append(typename)
 
         if failed_layers:
-            print(f"Completed with {len(failed_layers)} failure(s): {failed_layers}")
+            logging.info(f"Completed with {len(failed_layers)} failure(s): {failed_layers}")
         else:
-            print("Completed all layers successfully.")
+            logging.info("Completed all layers successfully.")
 
         return gdf_combined
     return (load_data_from_wfs,)
@@ -194,6 +204,7 @@ def _(mo):
 @app.cell
 def _(load_data_from_wfs, url_wfs):
     gdf_bodenbedeckung = load_data_from_wfs(url_wfs, prefix="ms:BS_Bodenbedeckungen")
+    gdf_bodenbedeckung = gdf_bodenbedeckung.reset_index(drop=True).assign(laufnr=lambda df: df.index + 1)
     gdf_bodenbedeckung
     return (gdf_bodenbedeckung,)
 
@@ -259,22 +270,22 @@ def _(buildings, gk, gpd):
 
 
 @app.cell
-def _(joined):
-    required = {"gml_id", "gebaeudekategorieid"}
+def _(joined, logging):
+    required = {"laufnr", "gebaeudekategorieid"}
     missing = required - set(joined.columns)
     if missing:
-        print(f"'joined' is missing required columns: {missing}")
+        logging.info(f"'joined' is missing required columns: {missing}")
 
     # Any building mapped to >1 distinct category?
-    per_bldg_ncats = joined.groupby("gml_id")["gebaeudekategorieid"].nunique(dropna=True)
+    per_bldg_ncats = joined.groupby("laufnr")["gebaeudekategorieid"].nunique(dropna=True)
     ambiguous_ids = per_bldg_ncats[per_bldg_ncats > 1].index.tolist()
 
-    print("Found ambiguous ids (building mapped to >1 distinct category)")
+    logging.info("Found ambiguous ids (building mapped to >1 distinct category)")
     # Show concise report of the ambiguous ones, then stop (no merge)
     ambiguous_buildings = (
-        joined.loc[joined["gml_id"].isin(ambiguous_ids), ["gml_id", "gebaeudekategorieid"]]
+        joined.loc[joined["laufnr"].isin(ambiguous_ids), ["laufnr", "gebaeudekategorieid"]]
         .drop_duplicates()
-        .sort_values(["gml_id", "gebaeudekategorieid"])
+        .sort_values(["laufnr", "gebaeudekategorieid"])
         .reset_index(drop=True)
     )
     ambiguous_buildings
@@ -284,7 +295,7 @@ def _(joined):
 @app.cell
 def _(ambiguous_ids, buildings, gk, gpd, joined, np, pd):
     if not len(ambiguous_ids):
-        amb_best = pd.DataFrame(columns=["gml_id", "gebaeudekategorieid", "pct_bldg"])
+        amb_best = pd.DataFrame(columns=["laufnr", "gebaeudekategorieid", "pct_bldg"])
         amb_stats = {
             "ambiguous_buildings": 0,
             "with_overlay_match": 0,
@@ -294,9 +305,9 @@ def _(ambiguous_ids, buildings, gk, gpd, joined, np, pd):
         amb_stats, amb_best
 
     # Limit to ambiguous buildings and the categories they touched in the join
-    amb_bldgs = buildings.loc[buildings["gml_id"].isin(ambiguous_ids), ["gml_id", "geometry"]].copy()
+    amb_bldgs = buildings.loc[buildings["laufnr"].isin(ambiguous_ids), ["laufnr", "geometry"]].copy()
     cats_needed = (
-        joined.loc[joined["gml_id"].isin(ambiguous_ids), "gebaeudekategorieid"]
+        joined.loc[joined["laufnr"].isin(ambiguous_ids), "gebaeudekategorieid"]
         .dropna().unique().tolist()
     )
     gk_sub = gk.loc[gk["gebaeudekategorieid"].isin(cats_needed), ["gebaeudekategorieid", "geometry"]].copy()
@@ -306,16 +317,16 @@ def _(ambiguous_ids, buildings, gk, gpd, joined, np, pd):
 
 
     # Percent of each building covered by the intersected category
-    bldg_area = amb_bldgs.assign(bldg_area=amb_bldgs.geometry.area)[["gml_id", "bldg_area"]]
-    inter = inter.merge(bldg_area, on="gml_id", how="left")
+    bldg_area = amb_bldgs.assign(bldg_area=amb_bldgs.geometry.area)[["laufnr", "bldg_area"]]
+    inter = inter.merge(bldg_area, on="laufnr", how="left")
     inter["int_area"] = inter.geometry.area
     inter["pct_bldg"] = np.where(inter["bldg_area"] > 0, inter["int_area"] / inter["bldg_area"] * 100.0, np.nan)
 
     # Choose, per building, the category with the largest percent overlap
-    best_idx = inter.groupby("gml_id")["pct_bldg"].idxmax()
-    amb_best = inter.loc[best_idx, ["gml_id", "gebaeudekategorieid", "pct_bldg"]].reset_index(drop=True)
+    best_idx = inter.groupby("laufnr")["pct_bldg"].idxmax()
+    amb_best = inter.loc[best_idx, ["laufnr", "gebaeudekategorieid", "pct_bldg"]].reset_index(drop=True)
 
-    resolved_set = set(amb_best["gml_id"])
+    resolved_set = set(amb_best["laufnr"])
     unresolved = sorted(set(ambiguous_ids) - resolved_set)
 
     # Percentage stats (on resolved ambiguous)
@@ -339,25 +350,25 @@ def _(ambiguous_ids, buildings, gk, gpd, joined, np, pd):
 def _(amb_best, ambiguous_ids, gdf_bodenbedeckung, joined, pd):
     # Unambiguous mapping straight from the spatial join
     mapping_unamb = (
-        joined.loc[~joined["gml_id"].isin(ambiguous_ids), ["gml_id", "gebaeudekategorieid"]]
+        joined.loc[~joined["laufnr"].isin(ambiguous_ids), ["laufnr", "gebaeudekategorieid"]]
         .dropna(subset=["gebaeudekategorieid"])
-        .drop_duplicates(subset=["gml_id"])
+        .drop_duplicates(subset=["laufnr"])
     )
     # Ambiguous resolved by largest intersection
-    mapping_amb = amb_best.loc[:, ["gml_id", "gebaeudekategorieid"]]
+    mapping_amb = amb_best.loc[:, ["laufnr", "gebaeudekategorieid"]]
 
     mapping_final = (
         pd.concat([mapping_unamb, mapping_amb], ignore_index=True)
-        .drop_duplicates(subset=["gml_id"], keep="last")
+        .drop_duplicates(subset=["laufnr"], keep="last")
     )
 
-    gdf_bodenbedeckung_cat = gdf_bodenbedeckung.merge(mapping_final, on="gml_id", how="left")
+    gdf_bodenbedeckung_cat = gdf_bodenbedeckung.merge(mapping_final, on="laufnr", how="left")
 
     stats_final = {
-        "joined_buildings_total": int(joined["gml_id"].nunique()),
-        "mapped_unambiguous": int(mapping_unamb["gml_id"].nunique()),
-        "mapped_ambiguous": int(mapping_amb["gml_id"].nunique()),
-        "mapped_total": int(mapping_final["gml_id"].nunique()),
+        "joined_buildings_total": int(joined["laufnr"].nunique()),
+        "mapped_unambiguous": int(mapping_unamb["laufnr"].nunique()),
+        "mapped_ambiguous": int(mapping_amb["laufnr"].nunique()),
+        "mapped_total": int(mapping_final["laufnr"].nunique()),
     }
 
     stats_final, gdf_bodenbedeckung_cat
@@ -397,20 +408,20 @@ def _(bb, gdf_oeffentlicher_raum, gpd, np, pd):
     public = gpd.GeoDataFrame(public, geometry="geometry", crs=oraw.crs).reset_index(drop=True)
 
     # polygonal intersections
-    inter_oeffentlicher_raum = gpd.overlay(tgt[["gml_id", "geometry", "area"]], public, how="intersection")
+    inter_oeffentlicher_raum = gpd.overlay(tgt[["laufnr", "geometry", "area"]], public, how="intersection")
     inter_oeffentlicher_raum = inter_oeffentlicher_raum[inter_oeffentlicher_raum.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
 
     if inter_oeffentlicher_raum.empty:
-        coverage = pd.DataFrame({"gml_id": tgt["gml_id"].unique(), "public_area": 0.0})
+        coverage = pd.DataFrame({"launfr": tgt["laufnr"].unique(), "public_area": 0.0})
     else:
         inter_oeffentlicher_raum["int_area"] = inter_oeffentlicher_raum.geometry.area
         coverage = (
-            inter_oeffentlicher_raum.groupby("gml_id", as_index=False)["int_area"]
+            inter_oeffentlicher_raum.groupby("laufnr", as_index=False)["int_area"]
             .sum()
             .rename(columns={"int_area": "public_area"})
         )
 
-    coverage = coverage.merge(tgt[["gml_id", "area"]], on="gml_id", how="right")
+    coverage = coverage.merge(tgt[["laufnr", "area"]], on="laufnr", how="right")
     coverage["public_area"] = coverage["public_area"].fillna(0.0)
     coverage["oeffentlicher_raum_pct"] = np.where(
         coverage["area"] > 0,
@@ -426,7 +437,7 @@ def _(bb, gdf_oeffentlicher_raum, gpd, np, pd):
     )
 
     # quick stats
-    n_total  = int(tgt["gml_id"].nunique())
+    n_total  = int(tgt["laufnr"].nunique())
     n_public = int((coverage["oeffentlicher Raum"] == "öffentlicher Raum").sum())
     stats = {
         "threshold_pct": PCT_THRESHOLD,
@@ -444,8 +455,8 @@ def _(bb, gdf_oeffentlicher_raum, gpd, np, pd):
 
 @app.cell
 def _(coverage, gdf_bodenbedeckung_cat):
-    cols = ["gml_id", "oeffentlicher Raum", "oeffentlicher_raum_pct"]
-    gdf_all = gdf_bodenbedeckung_cat.merge(coverage[cols], on="gml_id", how="left")
+    cols = ["laufnr", "oeffentlicher Raum", "oeffentlicher_raum_pct"]
+    gdf_all = gdf_bodenbedeckung_cat.merge(coverage[cols], on="laufnr", how="left")
 
     gdf_all
     return (gdf_all,)
