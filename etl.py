@@ -582,19 +582,19 @@ def _(mo):
 
 @app.cell
 def _(build_nearest_point_to_building_mapping, buildings, gdf_kultur):
-    mapping_kultur, mapping_kultur_filtered, stats_kultur = build_nearest_point_to_building_mapping(
+    mapping_kultur_all, mapping_kultur, stats_kultur = build_nearest_point_to_building_mapping(
         gdf_kultur, buildings, label_col="bi_subkategorie", max_distance_m=30.0, crs_metric=2056
     )
-    mapping_kultur, mapping_kultur_filtered, stats_kultur
+    mapping_kultur_all, mapping_kultur, stats_kultur
     return (mapping_kultur,)
 
 
 @app.cell
 def _(build_nearest_point_to_building_mapping, buildings, gdf_schulstandorte):
-    mapping_schulen, mapping_schulen_filtered, stats_schulen = build_nearest_point_to_building_mapping(
+    mapping_schulen_all, mapping_schulen, stats_schulen = build_nearest_point_to_building_mapping(
         gdf_schulstandorte, buildings, label_col="schultyp", max_distance_m=0.0, crs_metric=2056
     )
-    mapping_schulen, mapping_schulen_filtered, stats_schulen
+    mapping_schulen_all, mapping_schulen, stats_schulen
     return (mapping_schulen,)
 
 
@@ -670,19 +670,18 @@ def _(CRS_CH, gdf_all, mapping_kultur, mapping_schulen, pd):
     gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_kultur_subkat"] if c in gdf_nutzung.columns])
 
     # Merge + override (schools take precedence over prior Kultur overrides if inside the building)
-    gdf_nutzung_schulen = gdf_nutzung.merge(
+    gdf_nutzung = gdf_nutzung.merge(
         mapping_schulen.rename(columns={"schultyp": "_schule_schultyp", "dist_m": "schule_dist_m"}),
         on="laufnr",
         how="left",
     )
 
-    is_building = gdf_nutzung_schulen["bs_art_txt"].eq("Gebaeude.Gebaeude") & gdf_nutzung_schulen.geometry.notna()
-    has_school  = gdf_nutzung_schulen["_schule_schultyp"].notna()
-    gdf_nutzung_schulen.loc[is_building & has_school, "nutzung"] = \
-        "Gebäude - " + gdf_nutzung_schulen.loc[is_building & has_school, "_schule_schultyp"].astype(str)
+    has_school  = gdf_nutzung["_schule_schultyp"].notna()
+    gdf_nutzung.loc[bldg_mask & has_school, "nutzung"] = \
+        "Gebäude - " + gdf_nutzung.loc[bldg_mask & has_school, "_schule_schultyp"].astype(str)
 
     # Clean up helper column
-    gdf_nutzung_schulen = gdf_nutzung_schulen.drop(columns=[c for c in ["_schule_schultyp"] if c in gdf_nutzung_schulen.columns])
+    gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_schule_schultyp"] if c in gdf_nutzung.columns])
 
     if gdf_nutzung.crs is None:
         gdf_nutzung = gdf_nutzung.set_crs(CRS_CH)
