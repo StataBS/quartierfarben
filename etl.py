@@ -51,6 +51,14 @@ def _():
 def _(logging):
     logging.basicConfig(level=logging.DEBUG)
     logging.info(f"Executing {__file__}...")
+
+    CRS_CH = 2056
+    return (CRS_CH,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Helper Functions""")
     return
 
 
@@ -177,6 +185,45 @@ def _(
     return (load_data_from_wfs,)
 
 
+@app.cell
+def _(gpd):
+    def build_nearest_point_to_building_mapping(points_gdf, buildings_gdf, *, label_col, max_distance_m=0.0, crs_metric=2056):
+        p = points_gdf.copy()
+        b = buildings_gdf.copy()
+
+        # Align to metric CRS for distances
+        b = (b.set_crs(crs_metric) if b.crs is None else b.to_crs(crs_metric))
+        p = (p.set_crs(crs_metric) if p.crs is None else p.to_crs(crs_metric))
+
+        # Only points with the desired label
+        p = p[p[label_col].notna()].copy()
+
+        joined = gpd.sjoin_nearest(
+            p[[label_col, "geometry"]],
+            b[["laufnr", "geometry"]],
+            how="left",
+            distance_col="dist_m",
+        )
+
+        # Pick the closest point per building
+        mapping = (
+            joined.sort_values("dist_m")
+            .dropna(subset=["laufnr"])
+            .groupby("laufnr", as_index=False)
+            .first()[["laufnr", label_col, "dist_m"]]
+        )
+
+        mapping_filtered = mapping[mapping["dist_m"] <= max_distance_m].copy()
+
+        stats = {
+            "points_considered": int(p.shape[0]),
+            "buildings_matched": int(mapping["laufnr"].nunique()),
+            "max_distance_m": float(max_distance_m) if max_distance_m is not None else None,
+        }
+        return mapping, mapping_filtered, stats
+    return (build_nearest_point_to_building_mapping,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -233,6 +280,71 @@ def _(load_data_from_wfs, url_wfs):
     gdf_oeffentlicher_raum = load_data_from_wfs(url_wfs, shapes_to_load=['OR_OeffentlicherRaum_Allmend', 'OR_OeffentlicherRaum_Noerg'])
     gdf_oeffentlicher_raum
     return (gdf_oeffentlicher_raum,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Load [Points of Interest - Kultur](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Basel%20Info%20Points%20of%20Interest&tree_group_layers_Basel%20Info%20Points%20of%20Interest=BI_KulturUnterhaltung)""")
+    return
+
+
+@app.cell
+def _(load_data_from_wfs, url_wfs):
+    gdf_kultur = load_data_from_wfs(url_wfs, shapes_to_load=['BI_KulturUnterhaltung'])
+    gdf_kultur
+    return (gdf_kultur,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Load [Schulstandorte](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=SchulenRiehenBettingen%2CSchulstandorte_Basel&tree_group_layers_SchulenRiehenBettingen=SO_BezeichnungStandort_Tagesstruktur%2CSO_BezeichnungStandort_Kindergarten%2CSO_BezeichnungStandort_Primarschule%2CSO_Tagesstruktur%2CSO_Kindergarten%2CSO_Primarschule&tree_group_layers_Schulstandorte_Basel=SC_Tagesstruktur%2CSC_Turnhalle%2CSC_Sportplatz%2CSC_Schwimmhalle%2CSC_Kindergarten%2CSC_Primarschule%2CSC_Sekundarschule%2CSC_Gymnasium%2CSC_ZentrumBrueckenangebote%2CSC_Spezialangebot%2CSC_Gewerbeschule)""")
+    return
+
+
+@app.cell
+def _(CRS_CH, gpd, load_data_from_wfs, pd, url_wfs):
+    gdf_schulstandorte_basel = load_data_from_wfs(url_wfs, prefix="ms:SC")
+    gdf_schulstandorte_riehen_bettingen = load_data_from_wfs(url_wfs, prefix="ms:SO")
+
+    def _unwrap(x):
+        return x[0] if isinstance(x, tuple) else x
+
+    gdf_b = _unwrap(gdf_schulstandorte_basel).copy()
+    gdf_rb = _unwrap(gdf_schulstandorte_riehen_bettingen).copy()
+
+
+    gdf_b = gdf_b.set_crs(CRS_CH) if gdf_b.crs is None else gdf_b.to_crs(CRS_CH)
+    gdf_rb = gdf_rb.set_crs(CRS_CH) if gdf_rb.crs is None else gdf_rb.to_crs(CRS_CH)
+
+    # Basel: centroid for non-point geometries
+    non_point = ~gdf_b.geometry.geom_type.isin(["Point", "MultiPoint"])
+    if non_point.any():
+        gdf_b.loc[non_point, "geometry"] = gdf_b.loc[non_point, "geometry"].centroid
+
+    # Build unified 'schultyp'
+    if "sc_schultyp" not in gdf_b.columns:
+        raise KeyError("Expected column 'sc_schultyp' in Basel dataset.")
+    if "so_schultyp" not in gdf_rb.columns:
+        raise KeyError("Expected column 'so_schultyp' in Riehen/Bettingen dataset.")
+
+    gdf_b["schultyp"]  = gdf_b["sc_schultyp"]
+    gdf_rb["schultyp"] = gdf_rb["so_schultyp"]
+
+    basel_pts = gdf_b[["schultyp", "geometry"]].copy()
+    rb_pts    = gdf_rb[["schultyp", "geometry"]].copy()
+
+    gdf_schulstandorte = gpd.GeoDataFrame(
+        pd.concat([basel_pts, rb_pts], ignore_index=True),
+        crs=CRS_CH
+    )
+
+    # Clean up (optional)
+    gdf_schulstandorte = gdf_schulstandorte[
+        gdf_schulstandorte.geometry.notna() & gdf_schulstandorte["schultyp"].notna()
+        ].reset_index(drop=True)
+
+    gdf_schulstandorte
+    return (gdf_schulstandorte,)
 
 
 @app.cell(hide_code=True)
@@ -375,7 +487,7 @@ def _(amb_best, ambiguous_ids, gdf_bodenbedeckung, joined, pd):
     return (gdf_bodenbedeckung_cat,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""## Compute öffentlicher Raum for the remaining "befestigte".""")
     return
@@ -462,9 +574,39 @@ def _(coverage, gdf_bodenbedeckung_cat):
     return (gdf_all,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Build nearest points to_buildings (Kultur & Schulen)""")
+    return
+
+
 @app.cell
-def _(gdf_all, pd):
-    gdf = gdf_all.copy()
+def _(build_nearest_point_to_building_mapping, buildings, gdf_kultur):
+    mapping_kultur, mapping_kultur_filtered, stats_kultur = build_nearest_point_to_building_mapping(
+        gdf_kultur, buildings, label_col="bi_subkategorie", max_distance_m=30.0, crs_metric=2056
+    )
+    mapping_kultur, mapping_kultur_filtered, stats_kultur
+    return (mapping_kultur,)
+
+
+@app.cell
+def _(build_nearest_point_to_building_mapping, buildings, gdf_schulstandorte):
+    mapping_schulen, mapping_schulen_filtered, stats_schulen = build_nearest_point_to_building_mapping(
+        gdf_schulstandorte, buildings, label_col="schultyp", max_distance_m=0.0, crs_metric=2056
+    )
+    mapping_schulen, mapping_schulen_filtered, stats_schulen
+    return (mapping_schulen,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Get everything together""")
+    return
+
+
+@app.cell
+def _(CRS_CH, gdf_all, mapping_kultur, mapping_schulen, pd):
+    gdf_nutzung = gdf_all.copy()
 
     code2de = {
         "1010": "Provisorische Unterkunft",
@@ -495,24 +637,63 @@ def _(gdf_all, pd):
         return str(x).strip()
 
     # start with fallback from bs_art_txt
-    gdf["nutzung"] = gdf["bs_art_txt"].map(clean_bs_art)
+    gdf_nutzung["nutzung"] = gdf_nutzung["bs_art_txt"].map(clean_bs_art)
 
     # Gebäude mapping (overrides)
-    gdf["_code"] = gdf[COL_CODE].apply(norm_code) if COL_CODE in gdf.columns else None
-    has_code = gdf["_code"].notna() if COL_CODE in gdf.columns else pd.Series(False, index=gdf.index)
-    gdf.loc[has_code, "nutzung"] = "Gebäude - " + gdf.loc[has_code, "_code"].map(lambda c: code2de.get(c, c))
+    gdf_nutzung["_code"] = gdf_nutzung[COL_CODE].apply(norm_code) if COL_CODE in gdf_nutzung.columns else None
+    has_code = gdf_nutzung["_code"].notna() if COL_CODE in gdf_nutzung.columns else pd.Series(False, index=gdf_nutzung.index)
+    gdf_nutzung.loc[has_code, "nutzung"] = "Gebäude - " + gdf_nutzung.loc[has_code, "_code"].map(lambda c: code2de.get(c, c))
 
     # Öffentlicher Raum for TARGET_BB (overrides fallback, but not Gebäude)
-    if COL_OR in gdf.columns:
-        mask_ps = (gdf["bs_art_txt"] == TARGET_BB) & gdf[COL_OR].notna() & ~has_code
-        gdf.loc[mask_ps, "nutzung"] = "befestigt - uebrige befestigte - " + gdf.loc[mask_ps, COL_OR].astype(str)
+    if COL_OR in gdf_nutzung.columns:
+        mask_ps = (gdf_nutzung["bs_art_txt"] == TARGET_BB) & gdf_nutzung[COL_OR].notna() & ~has_code
+        gdf_nutzung.loc[mask_ps, "nutzung"] = "befestigt - uebrige befestigte - " + gdf_nutzung.loc[mask_ps, COL_OR].astype(str)
 
-    gdf = gdf.drop(columns=[c for c in ["_code"] if c in gdf.columns])
-    if gdf.crs is None:
-        gdf = gdf.set_crs(2056)
-    gdf = gdf.to_crs(4326)
-    gdf.to_file("landuse.geojson", driver="GeoJSON", layer='landuse-data')
-    gdf
+    gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_code"] if c in gdf_nutzung.columns])
+
+    # Merge mapping onto full gdf_buildings
+    gdf_nutzung = gdf_nutzung.merge(
+        mapping_kultur.rename(columns={
+            "bi_subkategorie": "_kultur_subkat",
+            "dist_m": "kultur_dist_m"
+        }),
+        on="laufnr",
+        how="left"
+    )
+
+    # Override `nutzung` ONLY for building polygons that got a Kultur match
+    bldg_mask = gdf_nutzung["bs_art_txt"].eq("Gebaeude.Gebaeude") & gdf_nutzung.geometry.notna()
+    mask_override = bldg_mask & gdf_nutzung["_kultur_subkat"].notna()
+    gdf_nutzung.loc[mask_override, "nutzung"] = "Gebäude - " + gdf_nutzung.loc[mask_override, "_kultur_subkat"].astype(str)
+
+    # (Keep kultur_dist_m for QA; drop helper if you want)
+    gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_kultur_subkat"] if c in gdf_nutzung.columns])
+
+    # Merge + override (schools take precedence over prior Kultur overrides if inside the building)
+    gdf_nutzung_schulen = gdf_nutzung.merge(
+        mapping_schulen.rename(columns={"schultyp": "_schule_schultyp", "dist_m": "schule_dist_m"}),
+        on="laufnr",
+        how="left",
+    )
+
+    is_building = gdf_nutzung_schulen["bs_art_txt"].eq("Gebaeude.Gebaeude") & gdf_nutzung_schulen.geometry.notna()
+    has_school  = gdf_nutzung_schulen["_schule_schultyp"].notna()
+    gdf_nutzung_schulen.loc[is_building & has_school, "nutzung"] = \
+        "Gebäude - " + gdf_nutzung_schulen.loc[is_building & has_school, "_schule_schultyp"].astype(str)
+
+    # Clean up helper column
+    gdf_nutzung_schulen = gdf_nutzung_schulen.drop(columns=[c for c in ["_schule_schultyp"] if c in gdf_nutzung_schulen.columns])
+
+    if gdf_nutzung.crs is None:
+        gdf_nutzung = gdf_nutzung.set_crs(CRS_CH)
+    gdf_nutzung = gdf_nutzung.to_crs(4326)
+    gdf_nutzung.to_file("landuse.geojson", driver="GeoJSON", layer='landuse-data')
+    gdf_nutzung
+    return
+
+
+@app.cell
+def _():
     return
 
 
