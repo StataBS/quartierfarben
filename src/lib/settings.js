@@ -68,7 +68,7 @@ export let categories = {
     greenspace: { color: "#92BA95", name_en: "Nature", name: "Grünflächen" },
     industry: { color: "#B68B3A", name_en: "Industrial Area", name: "Industrieareal" },
     leisure: { color: "#8B515C", name_en: "Culture & Leisure", name: "Kultur & Unterhaltung" },
-    sports: { color: "#E8D569", name_en: "Sports & Recreation", name: "Sport & Freizeit" },
+    sports: { color: "#E8D569", name_en: "Sports", name: "Sport" },
     education: { color: "#758EBA", name_en: "Education", name: "Schule & Bildung" },
     public_space: { color: "#665B44", name_en: "other Public Space", name: "sonstiger öffentlicher Raum" },
     other: { color: "#D3D3D3", name_en: "Other", name: "Sonstiges" }
@@ -103,7 +103,7 @@ export let landuses = {
     "Gewaesser - stehendes": { category: "water"},
     "humusiert - Gartenanlage - Friedhof": { category: "greenspace"},
     "humusiert - Gartenanlage - Tierpark": { category: "greenspace"},
-    "humusiert - Gartenanlage - Parkanlage Spielplatz": { category: "sports"},
+    "humusiert - Gartenanlage - Parkanlage Spielplatz": { category: "greenspace"},
     "humusiert - Gartenanlage - Schrebergarten": { category: "greenspace"},
     "humusiert - Gartenanlage - Sportanlage humusiert": { category: "sports"},
     "befestigt - Bahn - Bahnareal": { category: "rail"},
