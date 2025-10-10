@@ -15,12 +15,21 @@ https://observablehq.com/@d3/treemap
     lang,
     isMobile,
     screenWidth,
+    mapCenter,
+    circleRadius,
   } from "$lib/stores.js";
   import {
     categories,
     labelContrast,
     postcardMargin
   } from "$lib/settings.js";
+
+  import { onMount } from "svelte";
+
+  import geojson from "$lib/basel.js";
+
+  let projection;
+  let basel = geojson();
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
@@ -33,6 +42,51 @@ https://observablehq.com/@d3/treemap
       appText = de;
     }
   }
+
+  let titleInput;   // bind to the <input/>
+  let wrapper;      // bind to the container div
+
+  function placeInputAtTitle() {
+    if (!$svg || !titleInput || !wrapper) return;
+
+    const svgNode = $svg.node();
+    const svgRect = svgNode.getBoundingClientRect();
+    const wrapRect = wrapper.getBoundingClientRect();
+
+    // viewBox -> client px scale
+    const sx = svgRect.width  / width;
+    const sy = svgRect.height / height;
+
+    // desired title center in viewBox units
+    const tx = width / 2;
+    const ty = height * 0.85 - postcardMargin;
+
+    // convert to wrapper-local px
+    const left = (svgRect.left - wrapRect.left) + tx * sx;
+    const top  = (svgRect.top  - wrapRect.top)  + ty * sy;
+
+    // size & style
+    const inputWidth = (width - 2 * postcardMargin) * sx;
+    const fontPx = 30 * sy;
+
+    Object.assign(titleInput.style, {
+      position: "absolute",
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${inputWidth}px`,
+      transform: "translate(-50%, -50%)", // center on the point
+      fontSize: `${fontPx}px`,
+      textAlign: "center",
+      zIndex: 10
+    });
+  }
+
+  // run after draw, and on resize
+  onMount(() => {
+    const ro = new ResizeObserver(placeInputAtTitle);
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  });
 
   let treemap;
   function sumByCount(d) {
@@ -127,10 +181,10 @@ https://observablehq.com/@d3/treemap
     treemap(root.sum(sumByCount));
 
     let cell = $svg
-      .selectAll("g")
+      .selectAll("g.cell")
       .data(root.leaves())
       .enter()
-      .append("g")
+      .append("g").attr("class","cell")
       .attr("transform", function (d) {
         return "translate(" + (d.x0 + postcardMargin) + "," + (d.y0 + postcardMargin) + ")";
       });
@@ -141,7 +195,7 @@ https://observablehq.com/@d3/treemap
       .enter()
       .append("text")
       .attr("class", "title-text")
-      .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+      .attr("transform", "translate(" + width / 2 + "," + (height * 0.87 - postcardMargin) + ")")
       .attr("text-anchor", "middle")
       .attr("font-family", "IBM Plex Sans Bold")
       .attr("font-size", 30)
@@ -216,6 +270,46 @@ https://observablehq.com/@d3/treemap
       .attr("font-size", 10)
       .attr("fill", "#2f2fa2")
       .text(appText.postcard.front.footer);
+
+      const mapWidth  = 60;   // in viewBox units
+      const mapHeight = 60;
+      const map = $svg.append("g").attr("class", "mini-map");
+
+      projection = d3.geoMercator().fitSize([mapWidth, mapHeight], basel);
+      const path = d3.geoPath().projection(projection);
+
+      map
+        .selectAll("path")
+        .data(basel.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("stroke", "#292929")
+        .attr("fill", "none")
+        .attr("stroke-width", 1.5)
+        .attr("stroke-opacity", 0.3).attr("vector-effect", "non-scaling-stroke");
+
+
+      // Render the circle
+      const radiusInDegrees = $circleRadius / 111320; // 1 degree ≈ 111,320 meters
+      const circle = d3.geoCircle().center($mapCenter).radius(radiusInDegrees); // Set radius in degrees
+      map
+        .append("path")
+        .datum(circle())
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", "#2f2fa2")
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 0.8)
+        .attr("vector-effect", "non-scaling-stroke");
+
+      // Park in bottom-right, inside postcard margin
+      map.attr(
+        "transform",
+        `translate(${width - postcardMargin - mapWidth - 10},
+                   ${height - postcardMargin - mapHeight - 10})`
+      );
+      placeInputAtTitle();
   }
 
   function updateData(newData) {
@@ -288,24 +382,17 @@ https://observablehq.com/@d3/treemap
 </style>
 
 <div
-  class={$isMobile
-    ? "mx-4 pt-10 text-center"
-    : "absolute border right-16 z-40 drop-shadow-xl"}
-  style={$screenWidth <= 500
-    ? `transform-origin: top left; transform:scale(${
-        ($screenWidth - 50) / 444
-      }); height: ${(630 * ($screenWidth - 0)) / 444}px;`
-    : ""}
+  bind:this={wrapper}
+  class={$isMobile ? "mx-4 pt-10 text-center" : "absolute border right-16 z-40 drop-shadow-xl"}
+  style={$screenWidth <= 500 ? `transform-origin: top left; transform:scale(${($screenWidth - 50) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;` : ""}
 >
   <main class="w-full text-center" bind:this={visWrapper} />
-
   <input
+    bind:this={titleInput}
     type="text"
     bind:value={$textVis}
     placeholder={appText.postcard.front.title}
-    class="input  text-center absolute bottom-10 text-[30px] bold"
-    style={$isMobile ? `position: relative; bottom: 90px;  width:440px` : ""}
-    class:w-full={$screenWidth <= 444 ? `` : "w-full"}
+    class="input bold"
   />
 </div>
 

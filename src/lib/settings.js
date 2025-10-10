@@ -39,13 +39,14 @@ export const postcardWidth = 105; // in mm
 
 export const postcardHeight = 148; // in mm
 
-export const postcardMargin = 8; // in layout units, TODO convert to mm!
+export const postcardMargin = 0; // in layout units,
 
 // Map settings
 
-export const mapBounds = [ //should be bigger than city boundingbox, because city boundingbox borders should be possible to be dragged to center of screen, where the landuse analysis takes place
-    [7.5, 47.5], // Southwest coordinates
-    [7.7, 47.6], // Northeast coordinates
+//should be bigger than city boundingbox, because city boundingbox borders should be possible to be dragged to center of screen, where the landuse analysis takes place
+export const mapBounds = [
+    [7.4, 47.47], // Southwest coordinates
+    [7.85, 47.66], // Northeast coordinates
   ];
 
 export const initialMapCenter = [7.58979, 47.56022]; // Basel

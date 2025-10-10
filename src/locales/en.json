@@ -20,7 +20,7 @@
     "postcard": {
         "front": {
             "title": "Your text here",
-            "footer": "opendatabs.github.io/quartierfarben/"
+            "footer": ""
         },
         "back": {
             "description": "How much space do we really need to live, move around, and breathe freely?$Fair use of space in cities can lead to happier, healthier lives. Visit opendatabs.github.io/quartierfarben/ to explore how space is distributed in your neighborhood,",
