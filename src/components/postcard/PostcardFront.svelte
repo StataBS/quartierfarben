@@ -49,33 +49,18 @@ https://observablehq.com/@d3/treemap
   function placeInputAtTitle() {
     if (!$svg || !titleInput || !wrapper) return;
 
-    const svgNode = $svg.node();
-    const svgRect = svgNode.getBoundingClientRect();
-    const wrapRect = wrapper.getBoundingClientRect();
-
-    // viewBox -> client px scale
-    const sx = svgRect.width  / width;
-    const sy = svgRect.height / height;
-
-    // desired title center in viewBox units
-    const tx = width / 2;
-    const ty = height * 0.85 - postcardMargin;
-
-    // convert to wrapper-local px
-    const left = (svgRect.left - wrapRect.left) + tx * sx;
-    const top  = (svgRect.top  - wrapRect.top)  + ty * sy;
-
-    // size & style
-    const inputWidth = (width - 2 * postcardMargin) * sx;
-    const fontPx = 30 * sy;
+    const topPct   = ((height * 0.85 - postcardMargin) / height) * 100;
+    const fullWidthPct = ((width - 2 * postcardMargin) / width) * 100;
+    const widthPct = $isMobile ? 90 : fullWidthPct;
 
     Object.assign(titleInput.style, {
       position: "absolute",
-      left: `${left}px`,
-      top: `${top}px`,
-      width: `${inputWidth}px`,
-      transform: "translate(-50%, -50%)", // center on the point
-      fontSize: `${fontPx}px`,
+      left: "50%",
+      top: `${topPct}%`,
+      width: `${widthPct}%`,
+      transform: "translate(-50%, -50%)",
+      transformOrigin: "top left",
+      fontSize: "30px",         // let the wrapper’s scale handle visual size
       textAlign: "center",
       zIndex: 10
     });
@@ -85,7 +70,11 @@ https://observablehq.com/@d3/treemap
   onMount(() => {
     const ro = new ResizeObserver(placeInputAtTitle);
     ro.observe(wrapper);
-    return () => ro.disconnect();
+    window.addEventListener("resize", placeInputAtTitle);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", placeInputAtTitle);
+    };
   });
 
   let treemap;
@@ -195,7 +184,7 @@ https://observablehq.com/@d3/treemap
       .enter()
       .append("text")
       .attr("class", "title-text")
-      .attr("transform", "translate(" + width / 2 + "," + (height * 0.87 - postcardMargin) + ")")
+      .attr("transform", "translate(" + width / 2 + "," + (height * 0.85 - postcardMargin) + ")")
       .attr("text-anchor", "middle")
       .attr("font-family", "IBM Plex Sans Bold")
       .attr("font-size", 30)
@@ -383,7 +372,8 @@ https://observablehq.com/@d3/treemap
 
 <div
   bind:this={wrapper}
-  class={$isMobile ? "mx-4 pt-10 text-center" : "absolute border right-16 z-40 drop-shadow-xl"}
+  class={$isMobile ? "relative mx-4 pt-10 text-center"
+                   : "relative absolute border right-16 z-40 drop-shadow-xl"}
   style={$screenWidth <= 500 ? `transform-origin: top left; transform:scale(${($screenWidth - 50) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;` : ""}
 >
   <main class="w-full text-center" bind:this={visWrapper} />
@@ -395,5 +385,3 @@ https://observablehq.com/@d3/treemap
     class="input bold"
   />
 </div>
-
-
