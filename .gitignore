@@ -2,6 +2,9 @@
 .svelte-kit
 build
 
+# .idea
+.idea
+
 .netlify
 
 # Logs

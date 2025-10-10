@@ -56,23 +56,118 @@ export const mapMaxZoom = 17;
 
 export const analysisRadiusInMeters = 250;
 
+// Chosen for treemaps: high contrast, minimal confusion within each season.
+const PALETTES = {
+    spring: [
+        "#e4e4e4", // street
+        "#81C784", // greenspace
+        "#f9ad9a", // living
+        "#C0A98E", // building
+        "#949494", // rail
+        "#64B5F6", // water
+        "#DB1A00", // leisure
+        "#146C8B", // public_space
+        "#2A713F", // sports
+        "#C196DC", // education
+        "#5B3821", // industry
+        "#2c2c2c"  // other
+    ],
+    summer: [
+        "#e4e4e4", // street
+        "#388E3C", // greenspace
+        "#f9ad9a", // living
+        "#C0A98E", // building
+        "#949494", // rail
+        "#2196F3", // water
+        "#DB1A00", // leisure
+        "#146C8B", // public_space
+        "#2A713F", // sports
+        "#C196DC", // education
+        "#5B3821", // industry
+        "#2c2c2c"  // other
+    ],
+    autumn: [
+        "#e4e4e4", // street
+        "#f9af72", // greenspace
+        "#E07A5F", // living
+        "#C0A98E", // building
+        "#949494", // rail
+        "#42A5F5", // water
+        "#DB1A00", // leisure
+        "#146C8B", // public_space
+        "#2A713F", // sports
+        "#C196DC", // education
+        "#5B3821", // industry
+        "#2c2c2c"  // other
+    ],
+    winter: [
+        "#e4e4e4", // street
+        "#A5D6A7", // greenspace
+        "#f9ad9a", // living
+        "#C0A98E", // building
+        "#949494", // rail
+        "#90CAF9", // water
+        "#DB1A00", // leisure
+        "#146C8B", // public_space
+        "#2A713F", // sports
+        "#C196DC", // education
+        "#5B3821", // industry
+        "#2c2c2c"  // other
+    ],
+};
+
+
+// ---- Base (names stay constant) ----
+export const BASE_CATEGORIES = {
+    street:       { color: "#", name_en: "Streets & Ways",      name: "Strassen & Wege" },
+    greenspace:   { color: "#", name_en: "Nature",               name: "Grünflächen" },
+    living:       { color: "#", name_en: "Living",               name: "Wohnen" },
+    building:     { color: "#", name_en: "Other buildings",      name: "sonstige Gebäude" },
+    rail:         { color: "#", name_en: "Rail",                 name: "Bahn" },
+    water:        { color: "#", name_en: "Water",                name: "Wasser" },
+    leisure:      { color: "#", name_en: "Culture & Leisure",    name: "Kultur & Unterhaltung" },
+    public_space: { color: "#", name_en: "Other Public Space",   name: "sonstiger öffentlicher Raum" },
+    sports:       { color: "#", name_en: "Sports",               name: "Sport" },
+    education:    { color: "#", name_en: "Education",            name: "Schule & Bildung" },
+    industry:     { color: "#", name_en: "Industrial Area",      name: "Industrieareal" },
+    other:        { color: "#", name_en: "Other",                name: "Sonstiges" }
+};
+
+// ---- Determine meteorological season (Northern Hemisphere) ----
+// Spring: Mar 1–May 31; Summer: Jun 1–Aug 31; Autumn: Sep 1–Nov 30; Winter: Dec 1–Feb 28/29.
+export function getSeason(date = new Date()) {
+    const m = date.getMonth();
+    if (m >= 2 && m <= 4)  return "spring";
+    if (m >= 5 && m <= 7)  return "summer";
+    if (m >= 8 && m <= 10) return "autumn";
+    return "winter"; // Dec, Jan, Feb
+}
+
+// ---- Build categories with colors for a given season or date ----
+// Accepts a season string ("spring"|"summer"|"autumn"|"winter") OR a Date.
+export function buildCategoriesForSeason(seasonOrDate) {
+    const season = typeof seasonOrDate === "string" ? seasonOrDate : getSeason(seasonOrDate);
+    const palette = PALETTES[season];
+    if (!palette) throw new Error(`Unknown season: ${season}`);
+
+    const keys = Object.keys(BASE_CATEGORIES); // stable order
+    if (palette.length < keys.length) {
+        throw new Error(`Palette for ${season} has only ${palette.length} colors, need ${keys.length}.`);
+    }
+
+    // Assign colors by category order to ensure deterministic mapping.
+    const out = {};
+    keys.forEach((key, idx) => {
+        out[key] = { ...BASE_CATEGORIES[key], color: palette[idx] };
+    });
+    return out;
+}
+
+// ---- Export seasonal categories for "now" ----
+export const categories = buildCategoriesForSeason(new Date());
+
 // Landuse tiles settings
 export const landuseFieldname = "nutzung";
-
-export let categories = {
-    street: { color: "#3A3838", name_en: "Streets & Ways", name: "Strassen & Wege" },
-    living: { color: "#F0BD9F", name_en: "Living", name: "Wohnen" },
-    building: { color: "#C4C4C4", name_en: "other buildings", name: "sonstige Gebäude" },
-    rail: { color: "#898989", name_en: "Rail", name: "Bahn" },
-    water: { color: "#D0E4DE", name_en: "Water", name: "Wasser" },
-    greenspace: { color: "#92BA95", name_en: "Nature", name: "Grünflächen" },
-    industry: { color: "#B68B3A", name_en: "Industrial Area", name: "Industrieareal" },
-    leisure: { color: "#8B515C", name_en: "Culture & Leisure", name: "Kultur & Unterhaltung" },
-    sports: { color: "#E8D569", name_en: "Sports", name: "Sport" },
-    education: { color: "#758EBA", name_en: "Education", name: "Schule & Bildung" },
-    public_space: { color: "#665B44", name_en: "other Public Space", name: "sonstiger öffentlicher Raum" },
-    other: { color: "#D3D3D3", name_en: "Other", name: "Sonstiges" }
-};
 
 // Basel landuses → categories (names match your inputs verbatim)
 export let landuses = {
