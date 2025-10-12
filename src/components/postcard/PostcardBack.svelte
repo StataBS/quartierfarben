@@ -51,7 +51,7 @@
       />
     </g>
 
-    <g transform="translate(15,107)">
+    <g transform="translate(15,75)">
       <MulitlineText
         text={appText.postcard.back.greetings}
         x="10"
@@ -64,7 +64,7 @@
       />
     </g>
 
-    <g transform="translate(15,160)">
+    <g transform="translate(15,130)">
       {#each Object.values(categories) as { color, name, name_en}, i}
         <rect
           classs="rect-legend"

@@ -1,10 +1,10 @@
 # Quartierfarben, aka Grätzlfarben, aka Kiezcolors
 
-*Quartierfarben* is a map based tool that creates a postcard showing the landuse distribution in your neighborhood in Basel-Stadt. It is based on the [Kiezcolors](https://kiezcolors.odis-berlin.de) tool of the [Open Data Informationsstelle Berlin](https://odis-berlin.de/) and the Grätzlfarben of the TU Wien.
+*Quartierfarben* is a map based tool that creates a postcard showing the landuse distribution in your neighborhood in Basel-Stadt. It is based on the [Kiezcolors](https://kiezcolors.odis-berlin.de) tool of the [Open Data Informationsstelle Berlin](https://odis-berlin.de/) and the [Grätzlfarben](https://cartolab.at/graetzlfarben/) of the [TU Wien](https://cartography.tuwien.ac.at/).
 By zooming in and out you can pick a location and position it inside the circle. *Quartierfarben* then maps the individual areas onto a tree map diagram.
 You can print the resulting motive as a postcard and share it!
 
-![graetzlfarben_overview](static/img/overview-image.png)
+The colors change every season, so be sure to check it out again every season.
 
 ## Tech stack
 
@@ -42,23 +42,77 @@ You can preview the production build with `npm run preview`.
 
 To deploy your app, simply copy the `build` folder to your web server.
 
-## Data
+## Data & Processing
 
-For Basel-Stadt, the '[Bodenbedeckung](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Bodenbedeckung&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte)' dataset by the Canton Basel-Stadt is suitable for the application and available as a WFS. QGIS can be used to project it to ```EPSG:4326``` and save it (with layername 'landuse-data') as ```GeoJSON```, which is required to create the vector tiles for the map.
+The data processing was done in Python and marimo. 
 
-The most detailed information on landuse was used, based on the bs_art_txt column.
-  
-## Tile Creation
+Check it out on molab: [![Open in molab](https://molab.marimo.io/molab-shield.png)](https://molab.marimo.io/notebooks/nb_SEKYjCXDo7Ujz1tCHYiiDg)
 
-The tiles were created with *tippecanoe*. To [use tippecanoe on Windows, you need to install Ubuntu](https://gist.github.com/ryanbaumann/e5c7d76f6eeb8598e66c5785b677726e)
+### Sources (WFS)
+All datasets are retrieved from the Canton Basel-Stadt WFS using robust requests with retries and backoff.
 
-To then use tippecanoe, open the Ubuntu shell, change directory to c/ by `cd ../../mnt/c`, change directory to tippecanoe folder and `sudo make install`, enter sudo password. 
+| Theme | WFS layer(s) / prefix | Key fields used |
+|---|---|---|
+| **Bodenbedeckung (land cover)** | `ms:BS_Bodenbedeckungen*` | `bs_art_txt`, `gml_id`, `geometry` |
+| **Gebäudekategorien** | `DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie` | `gebaeudekategorieid`, `geometry` |
+| **Öffentlicher Raum** | `OR_OeffentlicherRaum_Allmend`, `OR_OeffentlicherRaum_Noerg` | `geometry` |
+| **Kultur (POI)** | `BI_KulturUnterhaltung` | `bi_subkategorie`, `geometry` |
+| **Schulstandorte** (Basel) | `ms:SC*` | `sc_schultyp`, `geometry` |
+| **Schulstandorte** (Riehen/Bettingen) | `ms:SO*` | `so_schultyp`, `geometry` |
 
-After changing to the directory where the input file is located, you can make the tiles by running the following command:
+### Retrieval
+- Capabilities via OWSLib; features via `GetFeature` (preferring GeoJSON, falling back to GML).
+- Jittered requests + retries to avoid rate-limits/outages.
+- Working CRS for geometry ops: **LV95 (EPSG:2056)**.
+
+### Pipeline (high-level)
+1. **Bodenbedeckung base layer**  
+   - Load all `ms:BS_Bodenbedeckungen*`.  
+   - Add a sequential `laufnr` (1-based) to ensure row-unique IDs.
+
+2. **Attach building categories (Gebäudekategorien → Gebäude)**  
+   - Filter buildings: `bs_art_txt == "Gebaeude.Gebaeude"`.  
+   - `sjoin(intersects)` to attach `gebaeudekategorieid`.  
+   - If a building hits **multiple** categories, resolve by **largest % area overlap** (intersection area ÷ building area).  
+   - Map `gebaeudekategorieid` to German labels and construct `nutzung = "Gebäude - <Label>"`.
+
+3. **Classify public space for “übrige befestigte”**  
+   - Dissolve `OR_OeffentlicherRaum_*` into a single geometry.  
+   - For `bs_art_txt == "befestigt.uebrige_befestigte.uebrige_befestigte"`, compute coverage % inside public space.  
+   - Threshold = **50 %** (configurable).  
+   - Add `oeffentlicher_raum_pct` and label `öffentlicher Raum` vs `kein öffentlicher Raum`.  
+   - For these features (only), if no building category applies, set  
+     `nutzung = "befestigt - uebrige befestigte - <öffentlicher Raum|kein öffentlicher Raum>"`.  
+   - Otherwise (general fallback), `nutzung` = cleaned `bs_art_txt` (dots → ` - `, underscores → space).
+
+4. **Kultur overrides (nearest point → building)**  
+   - From `BI_KulturUnterhaltung` points: nearest-building join in LV95.  
+   - **Max distance = 50 m**.  
+   - Where matched building exists, override  
+     `nutzung = "Gebäude - <bi_subkategorie>"`.
+
+5. **Schulstandorte overrides (points **inside** buildings only)**  
+   - Prepare points:  
+     - Basel (`ms:SC*`): convert non-point geometries to **centroids**.  
+     - Riehen/Bettingen (`ms:SO*`): use as-is.  
+     - Build unified `schultyp` (`sc_schultyp` or `so_schultyp`).  
+     - Concatenate to `gdf_schulstandorte`.  
+   - Nearest-building join with **MAX_DISTANCE = 0 m** (point must lie inside the building).  
+   - Where matched, final override:  
+     `nutzung = "Gebäude - <schultyp>"`.  
+   - (School overrides take precedence over Kultur where both apply.)
+
+6. **Export**  
+   - Reproject to **WGS84 (EPSG:4326)**. Necessary for `tippecanoe`
+   - Write `landuse.geojson`.
+
+### Tiles (Vector MBTiles/PMTiles directory)
+Tiles are generated with `tippecanoe`.
+This command can vary on the size of your city/region.
 
 ```bash
-tippecanoe \                                                                                                                                              
-  --output-to-directory ./tiles \
+tippecanoe \
+  --output-to-directory ./static/tiles \
   --layer landuse-data \
   --force --no-tile-compression \
   --minimum-zoom=12 --maximum-zoom=17 \
@@ -70,24 +124,34 @@ tippecanoe \
   ./{input-file}.geojson
 ```
 
-Your input data has to be in ```GeoJSON``` format and in the ```EPSG:4326``` projection. 
+* Rebuilt daily at **05:00 UTC** via GitHub Actions.
+* Uses `uv` to execute the marimo script (PEP-723 header drives Python & deps), then runs `tippecanoe`, and commits `static/tiles/`.
+
+### Notes & Limitations
+
+* WFS services may rate-limit or briefly refuse connections. The loader retries with backoff and polite jitter between layer requests.
+* Ambiguous building category joins are resolved by **largest percent area**, not absolute area; adjust to taste.
+* Distance thresholds: Kultur **50 m**, Schulen **0 m (inside)**—both configurable.
+* All spatial analysis in **EPSG:2056**; export in **EPSG:4326** for tippecanoe.
 
 ## Data Licence
 
-The landuse data *Bodenbedeckung* can be downloaded via WFS [from the Geopotal](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/geodienste#wfsbs) and is licenced under CC BY 4.0 + OpenStreetMap.
+The landuse data *Bodenbedeckung* and all other data used in this project can be downloaded [in the Dataportal](https://data.bs.ch/) or via WFS [from the Geopotal](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/geodienste#wfsbs) of the Canton of Basel-Stadt and is licenced under CC BY 4.0 + OpenStreetMap.
 
 ## Adapting to your city
 
-The application is built to be easily implemented in other cities if suitable data is available. All variables to be adapted can be found in [`src/lib/settings.js`](src/lib/settings.js). The texts can be changed in ['src/locales](src/locales/). Images and tiles have to be exchanged in ['src/static'](src/static).
+The application is built to be easily implemented in other cities if suitable data is available. All variables to be adapted can be found in [`src/lib/settings.js`](src/lib/settings.js). 
+The texts can be changed in ['src/locales](src/locales/). Images and tiles have to be exchanged in ['src/static'](src/static).
+The polygon for the right bottom of the card can be changed in [`src/lib/borders.js`](src/lib/borders.js).
 
 ## Kiosk mode
 
-For use in public settings, Grätzlfarben can be run in "kiosk mode", which offers a single print button instead of download buttons for the postcard images. Only printing the postcard front (the treemap visualizaton) is supported in kiosk mode -- it is assumed that postcards pre-printed with the back side are provided on site.
+For use in public settings, Quartierfarben can be run in "kiosk mode", which offers a single print button instead of download buttons for the postcard images. Only printing the postcard front (the treemap visualizaton) is supported in kiosk mode -- it is assumed that postcards pre-printed with the back side are provided on site.
 
 To activate kiosk mode in the app, append the `?kiosk` url parameter *before* the `#` sign in the url, for example:
 
 ```
-http://localhost:5173/?kiosk#13/48.20996/16.3704
+opendatabs.github.io/quartierfarben?kiosk#13/48.20996/16.3704
 ```
 
 You can start most browsers in kiosk mode, which causes the app to be displayed in full screen, disables any user interface elements, and supports printing without showing a dialog. E.g. for Firefox, the command to launch the app in kiosk mode would be:

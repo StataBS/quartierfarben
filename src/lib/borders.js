@@ -1,5 +1,5 @@
 export default function () {
-    const basel = {
+    const borders = {
         "type":"FeatureCollection",
         "features":[
             {
@@ -6367,6 +6367,5 @@ export default function () {
         ]
     };
 
-
-    return basel;
+    return borders;
 }

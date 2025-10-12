@@ -26,10 +26,10 @@ https://observablehq.com/@d3/treemap
 
   import { onMount } from "svelte";
 
-  import geojson from "$lib/basel.js";
+  import geojson from "$lib/borders.js";
 
   let projection;
-  let basel = geojson();
+  let borders = geojson();
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
@@ -184,7 +184,7 @@ https://observablehq.com/@d3/treemap
       .enter()
       .append("text")
       .attr("class", "title-text")
-      .attr("transform", "translate(" + width / 2 + "," + (height * 0.85 - postcardMargin) + ")")
+      .attr("transform", "translate(" + width / 2 + "," + (height * 0.87 - postcardMargin) + ")")
       .attr("text-anchor", "middle")
       .attr("font-family", "IBM Plex Sans Bold")
       .attr("font-size", 30)
@@ -264,12 +264,12 @@ https://observablehq.com/@d3/treemap
       const mapHeight = 60;
       const map = $svg.append("g").attr("class", "mini-map");
 
-      projection = d3.geoMercator().fitSize([mapWidth, mapHeight], basel);
+      projection = d3.geoMercator().fitSize([mapWidth, mapHeight], borders);
       const path = d3.geoPath().projection(projection);
 
       map
         .selectAll("path")
-        .data(basel.features)
+        .data(borders.features)
         .enter()
         .append("path")
         .attr("d", path)
