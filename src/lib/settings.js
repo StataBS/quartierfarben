@@ -60,77 +60,67 @@ export const analysisRadiusInMeters = 250;
 // Chosen for treemaps: high contrast, minimal confusion within each season.
 const PALETTES = {
     spring: [
-        "#e4e4e4", // street
+        "#949494", // street
         "#81C784", // greenspace
         "#f9ad9a", // living
-        "#C0A98E", // building
-        "#949494", // rail
+        "#FFE699", // building
         "#64B5F6", // water
-        "#DB1A00", // leisure
-        "#146C8B", // public_space
-        "#2A713F", // sports
-        "#C196DC", // education
-        "#5B3821", // industry
-        "#2c2c2c"  // other
+        "#f29422", // leisure
+        "#732f17", // industry
+        "#e4e4e4"  // other
     ],
     summer: [
-        "#e4e4e4", // street
+        "#949494", // street
         "#388E3C", // greenspace
         "#f9ad9a", // living
-        "#C0A98E", // building
-        "#949494", // rail
+        "#FFE699", // building
         "#2196F3", // water
-        "#DB1A00", // leisure
-        "#146C8B", // public_space
-        "#2A713F", // sports
-        "#C196DC", // education
-        "#5B3821", // industry
-        "#2c2c2c"  // other
+        "#ef9c3d", // leisure
+        "#732f17", // industry
+        "#e4e4e4"  // other
     ],
     autumn: [
-        "#e4e4e4", // street
+        "#949494", // street
         "#f9af72", // greenspace
         "#E07A5F", // living
-        "#C0A98E", // building
-        "#949494", // rail
+        "#FFE699", // building
         "#42A5F5", // water
-        "#DB1A00", // leisure
-        "#146C8B", // public_space
-        "#2A713F", // sports
-        "#C196DC", // education
-        "#5B3821", // industry
-        "#2c2c2c"  // other
+        "#ef9c3d", // leisure
+        "#732f17", // industry
+        "#e4e4e4"  // other
     ],
     winter: [
-        "#e4e4e4", // street
+        "#949494", // street
         "#A5D6A7", // greenspace
         "#f9ad9a", // living
-        "#C0A98E", // building
-        "#949494", // rail
+        "#FFE699", // building
         "#90CAF9", // water
-        "#DB1A00", // leisure
-        "#146C8B", // public_space
-        "#2A713F", // sports
-        "#C196DC", // education
-        "#5B3821", // industry
-        "#2c2c2c"  // other
+        "#ef9c3d", // leisure
+        "#732f17", // industry
+        "#e4e4e4"  // other
     ],
+    always: [
+        "#949494", // street
+        "#7BB589", // greenspace
+        "#f9ad9a", // living
+        "#FFE699", // building
+        "#5888a6", // water
+        "#ef9c3d", // leisure
+        "#732f17", // industry
+        "#e4e4e4"  // other
+    ]
 };
 
 
 // ---- Base (names stay constant) ----
 export const BASE_CATEGORIES = {
-    street:       { color: "#", name_en: "Streets & Ways",      name: "Strassen & Wege" },
+    traffic:      { color: "#", name_en: "Traffic",              name: "Verkehr" },
     greenspace:   { color: "#", name_en: "Nature",               name: "Grünflächen" },
     living:       { color: "#", name_en: "Living",               name: "Wohnen" },
-    building:     { color: "#", name_en: "Other buildings",      name: "sonstige Gebäude" },
-    rail:         { color: "#", name_en: "Rail",                 name: "Bahn" },
+    building:     { color: "#", name_en: "buildings",            name: "Gebäude" },
     water:        { color: "#", name_en: "Water",                name: "Wasser" },
-    leisure:      { color: "#", name_en: "Culture & Leisure",    name: "Kultur & Unterhaltung" },
-    public_space: { color: "#", name_en: "Other Public Space",   name: "sonstiger öffentlicher Raum" },
-    sports:       { color: "#", name_en: "Sports",               name: "Sport" },
-    education:    { color: "#", name_en: "Education",            name: "Schule & Bildung" },
-    industry:     { color: "#", name_en: "Industrial Area",      name: "Industrieareal" },
+    leisure:      { color: "#", name_en: "Culture & Leisure",    name: "Kultur & Freizeit" },
+    industry:     { color: "#", name_en: "Industry",             name: "Industrie" },
     other:        { color: "#", name_en: "Other",                name: "Sonstiges" }
 };
 
@@ -165,7 +155,14 @@ export function buildCategoriesForSeason(seasonOrDate) {
 }
 
 // ---- Export seasonal categories for "now" ----
-export const categories = buildCategoriesForSeason(new Date());
+// export const categories = buildCategoriesForSeason(new Date());
+// ---- Export seasonal categories for "always" ----
+export const categories = buildCategoriesForSeason("always");
+// ---- Exprt for every season ----
+// export const categories = buildCategoriesForSeason("spring");
+// export const categories = buildCategoriesForSeason("summer");
+// export const categories = buildCategoriesForSeason("autumn");
+// export const categories = buildCategoriesForSeason("winter");
 
 // Landuse tiles settings
 export const landuseFieldname = "nutzung";
@@ -173,10 +170,10 @@ export const landuseFieldname = "nutzung";
 // Basel landuses → categories (names match your inputs verbatim)
 export let landuses = {
     "humusiert - uebrige humusierte - Gewaesservorland humusiert":  { category: "greenspace"},
-    "befestigt - uebrige befestigte - Gewaesservorland befestigt":  { category: "street"},
-    "befestigt - uebrige befestigte - Sportanlage befestigt":  { category: "sports"},
-    "befestigt - Bahn - Tramareal":  { category: "rail"},
-    "befestigt - Trottoir":  { category: "street"},
+    "befestigt - uebrige befestigte - Gewaesservorland befestigt":  { category: "traffic"},
+    "befestigt - uebrige befestigte - Sportanlage befestigt":  { category: "leisure"},
+    "befestigt - Bahn - Tramareal":  { category: "traffic"},
+    "befestigt - Trottoir":  { category: "traffic"},
     "bestockt - uebrige bestockte":  { category: "greenspace"},
     "humusiert - Gartenanlage - Gartenanlage":  { category: "greenspace"},
     "humusiert - Intensivkultur - Reben":  { category: "greenspace"},
@@ -191,18 +188,18 @@ export let landuses = {
     "Gebäude - Gebäude mit teilweiser Wohnnutzung": { category: "living"},
     "Gebäude - Gebäude ohne Wohnnutzung": { category: "building"},
     "Gebäude - Sonderbau": { category: "building"},
-    "befestigt - uebrige befestigte - öffentlicher Raum": { category: "public_space"},
+    "befestigt - uebrige befestigte - öffentlicher Raum": { category: "other"},
     "befestigt - uebrige befestigte - kein öffentlicher Raum": { category: "other"},
-    "befestigt - Strasse Weg": { category: "street"},
+    "befestigt - Strasse Weg": { category: "traffic"},
     "humusiert - Acker Wiese Weide": { category: "greenspace"},
-    "befestigt - Verkehrsinsel": { category: "street"},
+    "befestigt - Verkehrsinsel": { category: "traffic"},
     "Gewaesser - stehendes": { category: "water"},
     "humusiert - Gartenanlage - Friedhof": { category: "greenspace"},
     "humusiert - Gartenanlage - Tierpark": { category: "greenspace"},
     "humusiert - Gartenanlage - Parkanlage Spielplatz": { category: "greenspace"},
     "humusiert - Gartenanlage - Schrebergarten": { category: "greenspace"},
-    "humusiert - Gartenanlage - Sportanlage humusiert": { category: "sports"},
-    "befestigt - Bahn - Bahnareal": { category: "rail"},
+    "humusiert - Gartenanlage - Sportanlage humusiert": { category: "leisure"},
+    "befestigt - Bahn - Bahnareal": { category: "traffic"},
     "befestigt - uebrige befestigte - Hafenareal": { category: "industry"},
     "bestockt - geschlossener Wald": { category: "greenspace"},
     "befestigt - Wasserbecken": { category: "water"},
@@ -211,20 +208,20 @@ export let landuses = {
     "Gewaesser - fliessendes": { category: "water"},
     "Gebäude - Museen, Ausstellungen, Sammlungen" : { category: "leisure"},
     "Gebäude - Konzerte, Theater, Vorträge" : { category: "leisure"},
-    "Gebäude - Sekundarschule": { category: "education"},
-    "Gebäude - Primarschule": { category: "education"},
-    "Gebäude - Kindergarten": { category: "education"},
-    "Gebäude - Allgemeine Gewerbeschule" : { category: "education"},
-    "Gebäude - Tagesstruktur": { category: "education"},
-    "Gebäude - Spezialangebot": { category: "education"},
-    "Gebäude - Schule für Gestaltung" : { category: "education"},
-    "Gebäude - Zentrum für Brückenangebote": { category: "education"},
-    "Gebäude - Fachmaturitätsschule" : { category: "education"},
-    "Gebäude - Mensa": { category: "education"},
-    "Gebäude - Berufsfachschule": { category: "education"},
-    "Gebäude - Turnhalle": { category: "sports"},
-    "Gebäude - Gymnasium" : { category: "education"},
-    "Gebäude - Berufsfachschule/Schule für Gestaltung" : { category: "education"},
-    "Gebäude - Schwimmhalle": { category: "sports"},
-    "Gebäude - WMS / IMS": { category: "education"}
+    "Gebäude - Sekundarschule": { category: "building"},
+    "Gebäude - Primarschule": { category: "building"},
+    "Gebäude - Kindergarten": { category: "building"},
+    "Gebäude - Allgemeine Gewerbeschule" : { category: "building"},
+    "Gebäude - Tagesstruktur": { category: "building"},
+    "Gebäude - Spezialangebot": { category: "building"},
+    "Gebäude - Schule für Gestaltung" : { category: "building"},
+    "Gebäude - Zentrum für Brückenangebote": { category: "building"},
+    "Gebäude - Fachmaturitätsschule" : { category: "building"},
+    "Gebäude - Mensa": { category: "building"},
+    "Gebäude - Berufsfachschule": { category: "building"},
+    "Gebäude - Turnhalle": { category: "leisure"},
+    "Gebäude - Gymnasium" : { category: "building"},
+    "Gebäude - Berufsfachschule/Schule für Gestaltung" : { category: "building"},
+    "Gebäude - Schwimmhalle": { category: "leisure"},
+    "Gebäude - WMS / IMS": { category: "building"}
 };
