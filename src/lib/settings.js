@@ -66,7 +66,7 @@ const PALETTES = {
         "#FFE699", // building
         "#64B5F6", // water
         "#f29422", // leisure
-        "#732f17", // industry
+        "#BF9A7A", // industry
         "#e4e4e4"  // other
     ],
     summer: [
@@ -76,7 +76,7 @@ const PALETTES = {
         "#FFE699", // building
         "#2196F3", // water
         "#ef9c3d", // leisure
-        "#732f17", // industry
+        "#BF9A7A", // industry
         "#e4e4e4"  // other
     ],
     autumn: [
@@ -86,7 +86,7 @@ const PALETTES = {
         "#FFE699", // building
         "#42A5F5", // water
         "#ef9c3d", // leisure
-        "#732f17", // industry
+        "#BF9A7A", // industry
         "#e4e4e4"  // other
     ],
     winter: [
@@ -96,7 +96,7 @@ const PALETTES = {
         "#FFE699", // building
         "#90CAF9", // water
         "#ef9c3d", // leisure
-        "#732f17", // industry
+        "#BF9A7A", // industry
         "#e4e4e4"  // other
     ],
     always: [
@@ -106,7 +106,7 @@ const PALETTES = {
         "#FFE699", // building
         "#5888a6", // water
         "#ef9c3d", // leisure
-        "#732f17", // industry
+        "#BF9A7A", // industry
         "#e4e4e4"  // other
     ]
 };
