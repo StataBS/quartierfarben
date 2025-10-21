@@ -4,8 +4,6 @@
 By zooming in and out you can pick a location and position it inside the circle. *Quartierfarben* then maps the individual areas onto a tree map diagram.
 You can print the resulting motive as a postcard and share it!
 
-The colors change every season, so be sure to check it out again every season.
-
 ## Tech stack
 
 This website is a [Svelte](https://svelte.dev/) app. The map is rendered using [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) with vector tiles, and the analysis is done using [Turf.js](https://turfjs.org/). The app is built as a fully static app and does not require any active server technology.
