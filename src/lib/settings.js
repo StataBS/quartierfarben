@@ -1,6 +1,6 @@
 // Some global settings you may want to adjust when adapting the project to your city
 
-export const projectTitle = "Quartierfarben";
+export const projectTitle = "Quartierfarben Basel-Stadt";
 
 export const og_siteName = "Statistisches Amt @ Kanton Basel-Stadt";
 
