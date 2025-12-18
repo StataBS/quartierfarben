@@ -14,7 +14,7 @@
 
 import marimo
 
-__generated_with = "0.16.4"
+__generated_with = "0.18.4"
 app = marimo.App(width="medium", auto_download=["html"])
 
 
@@ -29,17 +29,20 @@ def _():
     import pandas as pd
     import numpy as np
     import logging
-    import io, time, random, json
+    from shapely.geometry import box
+    import io, time, random, json, os
     return (
         HTTPAdapter,
         Retry,
         WebFeatureService,
+        box,
         gpd,
         io,
         json,
         logging,
         mo,
         np,
+        os,
         pd,
         random,
         requests,
@@ -58,7 +61,9 @@ def _(logging):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Helper Functions""")
+    mo.md(r"""
+    ## Helper Functions
+    """)
     return
 
 
@@ -110,15 +115,15 @@ def _(gpd, io, json):
 
 @app.cell
 def _(
-        WebFeatureService,
-        getfeature_geojson,
-        gpd,
-        io,
-        logging,
-        pd,
-        random,
-        retry_session,
-        time,
+    WebFeatureService,
+    getfeature_geojson,
+    gpd,
+    io,
+    logging,
+    pd,
+    random,
+    retry_session,
+    time,
 ):
     def load_data_from_wfs(url_wfs, shapes_to_load=None, prefix=None, *, sleep_min=0.3, sleep_max=0.8):
         """
@@ -226,13 +231,11 @@ def _(gpd):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # Load Data
 
     For more information on how to load data from WFS, see this page [Geodienste - Kanton Basel-Stadt](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/geodienste#wfsbs)
-    """
-    )
+    """)
     return
 
 
@@ -244,7 +247,9 @@ def _():
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Load [Bodenbedeckungen](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Bodenbedeckung&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte)""")
+    mo.md(r"""
+    ## Load [Bodenbedeckungen](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Bodenbedeckung&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte)
+    """)
     return
 
 
@@ -258,7 +263,9 @@ def _(load_data_from_wfs, url_wfs):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Load [Gebäudekategorien](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Geb%C3%A4udeinformationen&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Geb%C3%A4udeinformationen=DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie)""")
+    mo.md(r"""
+    ## Load [Gebäudekategorien](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Geb%C3%A4udeinformationen&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Geb%C3%A4udeinformationen=DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie)
+    """)
     return
 
 
@@ -271,7 +278,9 @@ def _(load_data_from_wfs, url_wfs):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Load [Öffentlicher Raum](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=%C3%96ffentlicher%20Raum&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_%C3%96ffentlicher%20Raum=OR_OeffentlicherRaum)""")
+    mo.md(r"""
+    ## Load [Öffentlicher Raum](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=%C3%96ffentlicher%20Raum&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_%C3%96ffentlicher%20Raum=OR_OeffentlicherRaum)
+    """)
     return
 
 
@@ -284,7 +293,9 @@ def _(load_data_from_wfs, url_wfs):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Load [Points of Interest - Kultur](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Basel%20Info%20Points%20of%20Interest&tree_group_layers_Basel%20Info%20Points%20of%20Interest=BI_KulturUnterhaltung)""")
+    mo.md(r"""
+    ## Load [Points of Interest - Kultur](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Basel%20Info%20Points%20of%20Interest&tree_group_layers_Basel%20Info%20Points%20of%20Interest=BI_KulturUnterhaltung)
+    """)
     return
 
 
@@ -297,7 +308,9 @@ def _(load_data_from_wfs, url_wfs):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Load [Schulstandorte](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=SchulenRiehenBettingen%2CSchulstandorte_Basel&tree_group_layers_SchulenRiehenBettingen=SO_BezeichnungStandort_Tagesstruktur%2CSO_BezeichnungStandort_Kindergarten%2CSO_BezeichnungStandort_Primarschule%2CSO_Tagesstruktur%2CSO_Kindergarten%2CSO_Primarschule&tree_group_layers_Schulstandorte_Basel=SC_Tagesstruktur%2CSC_Turnhalle%2CSC_Sportplatz%2CSC_Schwimmhalle%2CSC_Kindergarten%2CSC_Primarschule%2CSC_Sekundarschule%2CSC_Gymnasium%2CSC_ZentrumBrueckenangebote%2CSC_Spezialangebot%2CSC_Gewerbeschule)""")
+    mo.md(r"""
+    ## Load [Schulstandorte](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=SchulenRiehenBettingen%2CSchulstandorte_Basel&tree_group_layers_SchulenRiehenBettingen=SO_BezeichnungStandort_Tagesstruktur%2CSO_BezeichnungStandort_Kindergarten%2CSO_BezeichnungStandort_Primarschule%2CSO_Tagesstruktur%2CSO_Kindergarten%2CSO_Primarschule&tree_group_layers_Schulstandorte_Basel=SC_Tagesstruktur%2CSC_Turnhalle%2CSC_Sportplatz%2CSC_Schwimmhalle%2CSC_Kindergarten%2CSC_Primarschule%2CSC_Sekundarschule%2CSC_Gymnasium%2CSC_ZentrumBrueckenangebote%2CSC_Spezialangebot%2CSC_Gewerbeschule)
+    """)
     return
 
 
@@ -349,13 +362,17 @@ def _(CRS_CH, gpd, load_data_from_wfs, pd, url_wfs):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""# Transform and Merge Date""")
+    mo.md(r"""
+    # Transform and Merge Date
+    """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Merge Gebäude from Bodenbedeckungen with Gebäudekategorie""")
+    mo.md(r"""
+    ## Merge Gebäude from Bodenbedeckungen with Gebäudekategorie
+    """)
     return
 
 
@@ -489,7 +506,9 @@ def _(amb_best, ambiguous_ids, gdf_bodenbedeckung, joined, pd):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Compute öffentlicher Raum for the remaining "befestigte".""")
+    mo.md(r"""
+    ## Compute öffentlicher Raum for the remaining "befestigte".
+    """)
     return
 
 
@@ -576,7 +595,9 @@ def _(coverage, gdf_bodenbedeckung_cat):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Build nearest points to_buildings (Kultur & Schulen)""")
+    mo.md(r"""
+    ## Build nearest points to_buildings (Kultur & Schulen)
+    """)
     return
 
 
@@ -600,12 +621,65 @@ def _(build_nearest_point_to_building_mapping, buildings, gdf_schulstandorte):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Get everything together""")
+    mo.md(r"""
+    ## Get everything together
+    """)
     return
 
 
 @app.cell
-def _(CRS_CH, gdf_all, mapping_kultur, mapping_schulen, pd):
+def _(json, logging, os, pd):
+    # Load color configuration from JSON file
+    config_path = os.path.join(os.path.dirname(__file__), "src", "lib", "colors.json")
+    
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            color_config = json.load(f)
+        logging.info(f"Loaded color configuration from {config_path}")
+    except FileNotFoundError:
+        logging.error(f"Color configuration file not found: {config_path}")
+        raise
+    except json.JSONDecodeError as e:
+        logging.error(f"Error parsing color configuration JSON: {e}")
+        raise
+    
+    # Extract configuration
+    PALETTES = color_config["palettes"]
+    LANDUSE_TO_CATEGORY = color_config["landuseMapping"]
+    
+    # Default to "always" palette (can be changed to "spring", "summer", "autumn", "winter")
+    PALETTE_ALWAYS = PALETTES["always"]
+    
+    def get_color_for_nutzung(nutzung, season="always"):
+        """Get color for a given nutzung value.
+        
+        Parameters:
+        -----------
+        nutzung : str
+            The nutzung value to get color for
+        season : str
+            Season palette to use: "spring", "summer", "autumn", "winter", or "always" (default)
+        """
+        if pd.isna(nutzung):
+            palette = PALETTES.get(season, PALETTE_ALWAYS)
+            return palette.get("other", "#ffffff")
+        nutzung_str = str(nutzung).strip()
+        category = LANDUSE_TO_CATEGORY.get(nutzung_str, "other")
+        palette = PALETTES.get(season, PALETTE_ALWAYS)
+        return palette.get(category, "#ffffff")
+
+    return (get_color_for_nutzung,)
+
+
+@app.cell
+def _(
+    CRS_CH,
+    gdf_all,
+    get_color_for_nutzung,
+    mapping_kultur,
+    mapping_schulen,
+    pd,
+):
     gdf_nutzung = gdf_all.copy()
 
     code2de = {
@@ -683,16 +757,220 @@ def _(CRS_CH, gdf_all, mapping_kultur, mapping_schulen, pd):
     # Clean up helper column
     gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_schule_schultyp"] if c in gdf_nutzung.columns])
 
+    # Add color column based on nutzung
+    gdf_nutzung["color"] = gdf_nutzung["nutzung"].apply(get_color_for_nutzung)
+
     if gdf_nutzung.crs is None:
         gdf_nutzung = gdf_nutzung.set_crs(CRS_CH)
     gdf_nutzung = gdf_nutzung.to_crs(4326)
     gdf_nutzung.to_file("landuse.geojson", driver="GeoJSON", layer='landuse-data')
     gdf_nutzung
-    return
+    return (gdf_nutzung,)
 
 
 @app.cell
 def _():
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Export to SVG
+    """)
+    return
+
+
+@app.cell
+def _(CRS_CH, box, gpd, logging):
+    def export_to_svg(gdf, output_path="landuse.svg", bounds=None, width=2000, height=None, stroke_width=0.5, stroke_color="#000000", target_crs=None):
+        """
+        Export GeoDataFrame to SVG with colors.
+
+        Parameters:
+        -----------
+        gdf : GeoDataFrame
+            GeoDataFrame with 'color' column and geometries
+        output_path : str
+            Output SVG file path
+        bounds : tuple or None
+            (minx, miny, maxx, maxy) in CRS coordinates. If None, uses gdf.total_bounds
+        width : int
+            SVG width in pixels
+        height : int or None
+            SVG height in pixels. If None, calculated from aspect ratio
+        stroke_width : float
+            Stroke width for polygon outlines
+        stroke_color : str
+            Stroke color for polygon outlines
+        target_crs : int or None
+            Target CRS for projection (default: CRS_CH = 2056 for Swiss coordinates).
+            Use a projected CRS for correct aspect ratios.
+        """
+        if "color" not in gdf.columns:
+            raise ValueError("GeoDataFrame must have a 'color' column")
+
+        if gdf.empty:
+            logging.warning("GeoDataFrame is empty, creating empty SVG")
+            with open(output_path, "w") as f:
+                f.write('<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}"/>\n'.format(width, height or width))
+            return
+
+        # Convert to target CRS for proper projection (use Swiss coordinates by default)
+        if target_crs is None:
+            target_crs = CRS_CH
+        
+        gdf_projected = gdf.copy()
+        if gdf_projected.crs is None:
+            logging.warning("GeoDataFrame has no CRS, assuming EPSG:4326")
+            gdf_projected = gdf_projected.set_crs(4326)
+        
+        # Convert to target CRS if different
+        if gdf_projected.crs.to_epsg() != target_crs:
+            gdf_projected = gdf_projected.to_crs(target_crs)
+            logging.info(f"Converted to CRS {target_crs} for SVG export")
+        
+        # Ensure color column is preserved in projected dataframe
+        if "color" not in gdf_projected.columns and "color" in gdf.columns:
+            gdf_projected["color"] = gdf["color"].values
+
+        # Get bounds in projected CRS
+        if bounds is None:
+            bounds = gdf_projected.total_bounds  # minx, miny, maxx, maxy
+        else:
+            # If bounds provided, they should be in the original CRS, so convert them
+            if gdf.crs is not None and gdf.crs.to_epsg() != target_crs:
+                bounds_geom = box(bounds[0], bounds[1], bounds[2], bounds[3])
+                bounds_gdf = gpd.GeoDataFrame([1], geometry=[bounds_geom], crs=gdf.crs)
+                bounds_gdf = bounds_gdf.to_crs(target_crs)
+                bounds = bounds_gdf.total_bounds
+        
+        minx, miny, maxx, maxy = bounds
+
+        # Calculate aspect ratio and height if not provided
+        aspect_ratio = (maxy - miny) / (maxx - minx) if (maxx - minx) > 0 else 1.0
+        if height is None:
+            height = int(width * aspect_ratio)
+
+        # Scale factors
+        scale_x = width / (maxx - minx) if (maxx - minx) > 0 else 1.0
+        scale_y = height / (maxy - miny) if (maxy - miny) > 0 else 1.0
+
+        def coord_to_svg(x, y):
+            """Convert geographic coordinates to SVG coordinates."""
+            svg_x = (x - minx) * scale_x
+            svg_y = height - (y - miny) * scale_y  # Flip Y axis
+            return svg_x, svg_y
+
+        def geom_to_svg_path(geom):
+            """Convert Shapely geometry to SVG path string."""
+            if geom is None or geom.is_empty:
+                return ""
+
+            if geom.geom_type == "Polygon":
+                return polygon_to_path(geom)
+            elif geom.geom_type == "MultiPolygon":
+                return " ".join(polygon_to_path(p) for p in geom.geoms)
+            elif geom.geom_type == "Point":
+                x, y = coord_to_svg(geom.x, geom.y)
+                return f"M {x} {y} L {x} {y}"
+            elif geom.geom_type == "MultiPoint":
+                return " ".join(f"M {coord_to_svg(p.x, p.y)[0]} {coord_to_svg(p.x, p.y)[1]} L {coord_to_svg(p.x, p.y)[0]} {coord_to_svg(p.x, p.y)[1]}" for p in geom.geoms)
+            else:
+                logging.warning(f"Unsupported geometry type: {geom.geom_type}")
+                return ""
+
+        def polygon_to_path(poly):
+            """Convert Polygon to SVG path."""
+            if poly.is_empty:
+                return ""
+
+            # Exterior ring
+            coords = list(poly.exterior.coords)
+            if len(coords) < 3:
+                return ""
+
+            path_parts = []
+            for i, (x, y) in enumerate(coords):
+                svg_x, svg_y = coord_to_svg(x, y)
+                if i == 0:
+                    path_parts.append(f"M {svg_x} {svg_y}")
+                else:
+                    path_parts.append(f"L {svg_x} {svg_y}")
+            path_parts.append("Z")
+
+            # Interior rings (holes)
+            for interior in poly.interiors:
+                coords = list(interior.coords)
+                if len(coords) < 3:
+                    continue
+                for i, (x, y) in enumerate(coords):
+                    svg_x, svg_y = coord_to_svg(x, y)
+                    if i == 0:
+                        path_parts.append(f"M {svg_x} {svg_y}")
+                    else:
+                        path_parts.append(f"L {svg_x} {svg_y}")
+                path_parts.append("Z")
+
+            return " ".join(path_parts)
+
+        # Build SVG
+        svg_parts = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+            '  <g id="landuse">'
+        ]
+
+        # Add polygons (use projected geometries)
+        for idx, row in gdf_projected.iterrows():
+            color = row.get("color", "#ffffff")
+            geom = row.geometry
+
+            if geom is None or geom.is_empty:
+                continue
+
+            path_d = geom_to_svg_path(geom)
+            if path_d:
+                svg_parts.append(
+                    f'    <path d="{path_d}" fill="{color}" stroke="{stroke_color}" stroke-width="{stroke_width}" />'
+                )
+
+        svg_parts.extend([
+            '  </g>',
+            '</svg>'
+        ])
+
+        # Write to file
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(svg_parts))
+
+        logging.info(f"SVG exported to {output_path} ({width}x{height}px)")
+        return output_path
+
+    return (export_to_svg,)
+
+
+@app.cell
+def _(export_to_svg, gdf_nutzung, logging):
+    # Export to SVG
+    # You can adjust these parameters:
+    # - width: SVG width in pixels (default 2000)
+    # - height: SVG height in pixels (None = auto-calculate from aspect ratio)
+    # - bounds: (minx, miny, maxx, maxy) to crop to specific area, or None for full extent
+    # - stroke_width: outline width (default 0.5, set to 0 for no outlines)
+
+    svg_path = export_to_svg(
+        gdf_nutzung,
+        output_path="landuse.svg",
+        bounds=None,  # Use None for full extent, or specify: (minx, miny, maxx, maxy)
+        width=2000,
+        height=None,  # Auto-calculate from aspect ratio
+        stroke_width=0.5,  # Set to 0 for no outlines
+        stroke_color="#000000"
+    )
+
+    logging.info(f"SVG file created: {svg_path}")
+    svg_path
     return
 
 

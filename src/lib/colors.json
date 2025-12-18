@@ -1,0 +1,146 @@
+{
+  "palettes": {
+    "spring": {
+      "traffic": "#949494",
+      "greenspace": "#81C784",
+      "living": "#f9ad9a",
+      "building": "#FFE699",
+      "water": "#64B5F6",
+      "leisure": "#f29422",
+      "industry": "#BF9A7A",
+      "other": "#e4e4e4"
+    },
+    "summer": {
+      "traffic": "#949494",
+      "greenspace": "#388E3C",
+      "living": "#f9ad9a",
+      "building": "#FFE699",
+      "water": "#2196F3",
+      "leisure": "#ef9c3d",
+      "industry": "#BF9A7A",
+      "other": "#e4e4e4"
+    },
+    "autumn": {
+      "traffic": "#949494",
+      "greenspace": "#f9af72",
+      "living": "#E07A5F",
+      "building": "#FFE699",
+      "water": "#42A5F5",
+      "leisure": "#ef9c3d",
+      "industry": "#BF9A7A",
+      "other": "#e4e4e4"
+    },
+    "winter": {
+      "traffic": "#949494",
+      "greenspace": "#A5D6A7",
+      "living": "#f9ad9a",
+      "building": "#FFE699",
+      "water": "#90CAF9",
+      "leisure": "#ef9c3d",
+      "industry": "#BF9A7A",
+      "other": "#e4e4e4"
+    },
+    "always": {
+      "traffic": "#949494",
+      "greenspace": "#7BB589",
+      "living": "#f9ad9a",
+      "building": "#FFE699",
+      "water": "#5888a6",
+      "leisure": "#ef9c3d",
+      "industry": "#BF9A7A",
+      "other": "#e4e4e4"
+    }
+  },
+  "categories": {
+    "traffic": {
+      "name_en": "Traffic",
+      "name": "Verkehr"
+    },
+    "greenspace": {
+      "name_en": "Nature",
+      "name": "Grünflächen"
+    },
+    "living": {
+      "name_en": "Living",
+      "name": "Wohnen"
+    },
+    "building": {
+      "name_en": "buildings",
+      "name": "Gebäude"
+    },
+    "water": {
+      "name_en": "Water",
+      "name": "Wasser"
+    },
+    "leisure": {
+      "name_en": "Culture & Leisure",
+      "name": "Kultur & Freizeit"
+    },
+    "industry": {
+      "name_en": "Industry",
+      "name": "Industrie"
+    },
+    "other": {
+      "name_en": "Other",
+      "name": "Sonstiges"
+    }
+  },
+  "landuseMapping": {
+    "humusiert - uebrige humusierte - Gewaesservorland humusiert": "greenspace",
+    "befestigt - uebrige befestigte - Gewaesservorland befestigt": "traffic",
+    "befestigt - uebrige befestigte - Sportanlage befestigt": "leisure",
+    "befestigt - Bahn - Tramareal": "traffic",
+    "befestigt - Trottoir": "traffic",
+    "bestockt - uebrige bestockte": "greenspace",
+    "humusiert - Gartenanlage - Gartenanlage": "greenspace",
+    "humusiert - Intensivkultur - Reben": "greenspace",
+    "humusiert - Intensivkultur - uebrige Intensivkultur": "greenspace",
+    "humusiert - uebrige humusierte - uebrige humusierte": "greenspace",
+    "Gebaeude - Gebaeude": "building",
+    "Gebäude - Provisorische Unterkunft": "living",
+    "Gebäude - Gebäude ausschliesslich für Wohnnutzung": "living",
+    "Gebäude - Einfamilienhaus, ohne Nebennutzung": "living",
+    "Gebäude - Mehrfamilienhaus, ohne Nebennutzung": "living",
+    "Gebäude - Wohngebäude mit Nebennutzung": "living",
+    "Gebäude - Gebäude mit teilweiser Wohnnutzung": "living",
+    "Gebäude - Gebäude ohne Wohnnutzung": "building",
+    "Gebäude - Sonderbau": "building",
+    "befestigt - uebrige befestigte - öffentlicher Raum": "other",
+    "befestigt - uebrige befestigte - kein öffentlicher Raum": "other",
+    "befestigt - Strasse Weg": "traffic",
+    "humusiert - Acker Wiese Weide": "greenspace",
+    "befestigt - Verkehrsinsel": "traffic",
+    "Gewaesser - stehendes": "water",
+    "humusiert - Gartenanlage - Friedhof": "greenspace",
+    "humusiert - Gartenanlage - Tierpark": "greenspace",
+    "humusiert - Gartenanlage - Parkanlage Spielplatz": "greenspace",
+    "humusiert - Gartenanlage - Schrebergarten": "greenspace",
+    "humusiert - Gartenanlage - Sportanlage humusiert": "leisure",
+    "befestigt - Bahn - Bahnareal": "traffic",
+    "befestigt - uebrige befestigte - Hafenareal": "industry",
+    "bestockt - geschlossener Wald": "greenspace",
+    "befestigt - Wasserbecken": "water",
+    "befestigt - uebrige befestigte - Fabrikareal": "industry",
+    "Gebaeude - Tank": "industry",
+    "Gewaesser - fliessendes": "water",
+    "Gebäude - Museen, Ausstellungen, Sammlungen": "leisure",
+    "Gebäude - Konzerte, Theater, Vorträge": "leisure",
+    "Gebäude - Sekundarschule": "building",
+    "Gebäude - Primarschule": "building",
+    "Gebäude - Kindergarten": "building",
+    "Gebäude - Allgemeine Gewerbeschule": "building",
+    "Gebäude - Tagesstruktur": "building",
+    "Gebäude - Spezialangebot": "building",
+    "Gebäude - Schule für Gestaltung": "building",
+    "Gebäude - Zentrum für Brückenangebote": "building",
+    "Gebäude - Fachmaturitätsschule": "building",
+    "Gebäude - Mensa": "building",
+    "Gebäude - Berufsfachschule": "building",
+    "Gebäude - Turnhalle": "leisure",
+    "Gebäude - Gymnasium": "building",
+    "Gebäude - Berufsfachschule/Schule für Gestaltung": "building",
+    "Gebäude - Schwimmhalle": "leisure",
+    "Gebäude - WMS / IMS": "building"
+  }
+}
+

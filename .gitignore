@@ -117,3 +117,7 @@ data-preprocessing/clean.py
 data-preprocessing/explore.py
 data-preprocessing/categorize.py
 data-preprocessing/__pycache__/utils.cpython-312.pyc
+
+.DS_Store
+
+__marimo__
