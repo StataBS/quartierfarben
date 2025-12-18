@@ -114,7 +114,7 @@
     "Gebäude - Gebäude mit teilweiser Wohnnutzung": "living",
     "Gebäude - Gebäude ohne Wohnnutzung": "building",
     "Gebäude - Sonderbau": "building",
-    "befestigt - uebrige befestigte - öffentlicher Raum": "other",
+    "befestigt - uebrige befestigte - öffentlicher Raum": "leisure",
     "befestigt - uebrige befestigte - kein öffentlicher Raum": "other",
     "befestigt - Strasse Weg": "traffic",
     "humusiert - Acker Wiese Weide": "greenspace",
