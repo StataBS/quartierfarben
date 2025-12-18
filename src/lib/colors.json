@@ -6,7 +6,7 @@
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#64B5F6",
-      "leisure": "#f29422",
+      "leisure": "#efb777",
       "industry": "#BF9A7A",
       "other": "#e4e4e4"
     },
@@ -16,7 +16,7 @@
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#2196F3",
-      "leisure": "#ef9c3d",
+      "leisure": "#efb777",
       "industry": "#BF9A7A",
       "other": "#e4e4e4"
     },
@@ -26,7 +26,7 @@
       "living": "#E07A5F",
       "building": "#FFE699",
       "water": "#42A5F5",
-      "leisure": "#ef9c3d",
+      "leisure": "#efb777",
       "industry": "#BF9A7A",
       "other": "#e4e4e4"
     },
@@ -36,7 +36,7 @@
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#90CAF9",
-      "leisure": "#ef9c3d",
+      "leisure": "#efb777",
       "industry": "#BF9A7A",
       "other": "#e4e4e4"
     },
@@ -46,7 +46,7 @@
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#5888a6",
-      "leisure": "#ef9c3d",
+      "leisure": "#efb777",
       "industry": "#BF9A7A",
       "other": "#e4e4e4"
     }
