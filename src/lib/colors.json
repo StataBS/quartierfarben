@@ -3,6 +3,7 @@
     "spring": {
       "traffic": "#949494",
       "greenspace": "#81C784",
+      "forest": "#4B8354",
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#64B5F6",
@@ -13,6 +14,7 @@
     "summer": {
       "traffic": "#949494",
       "greenspace": "#388E3C",
+      "forest": "#4B8354",
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#2196F3",
@@ -23,6 +25,7 @@
     "autumn": {
       "traffic": "#949494",
       "greenspace": "#f9af72",
+      "forest": "#4B8354",
       "living": "#E07A5F",
       "building": "#FFE699",
       "water": "#42A5F5",
@@ -33,6 +36,7 @@
     "winter": {
       "traffic": "#949494",
       "greenspace": "#A5D6A7",
+      "forest": "#4B8354",
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#90CAF9",
@@ -43,6 +47,7 @@
     "always": {
       "traffic": "#949494",
       "greenspace": "#7BB589",
+      "forest": "#4B8354",
       "living": "#f9ad9a",
       "building": "#FFE699",
       "water": "#5888a6",
@@ -59,6 +64,10 @@
     "greenspace": {
       "name_en": "Nature",
       "name": "Grünflächen"
+    },
+    "forest": {
+      "name_en": "Forest",
+      "name": "Wald"
     },
     "living": {
       "name_en": "Living",
@@ -91,7 +100,7 @@
     "befestigt - uebrige befestigte - Sportanlage befestigt": "leisure",
     "befestigt - Bahn - Tramareal": "traffic",
     "befestigt - Trottoir": "traffic",
-    "bestockt - uebrige bestockte": "greenspace",
+    "bestockt - uebrige bestockte": "forest",
     "humusiert - Gartenanlage - Gartenanlage": "greenspace",
     "humusiert - Intensivkultur - Reben": "greenspace",
     "humusiert - Intensivkultur - uebrige Intensivkultur": "greenspace",
@@ -118,7 +127,7 @@
     "humusiert - Gartenanlage - Sportanlage humusiert": "leisure",
     "befestigt - Bahn - Bahnareal": "traffic",
     "befestigt - uebrige befestigte - Hafenareal": "industry",
-    "bestockt - geschlossener Wald": "greenspace",
+    "bestockt - geschlossener Wald": "forest",
     "befestigt - Wasserbecken": "water",
     "befestigt - uebrige befestigte - Fabrikareal": "industry",
     "Gebaeude - Tank": "industry",

@@ -62,7 +62,7 @@ export const analysisRadiusInMeters = 250;
 
 // Transform JSON structure to match expected format
 // Category order (must match the order in JSON palettes)
-const CATEGORY_ORDER = ["traffic", "greenspace", "living", "building", "water", "leisure", "industry", "other"];
+const CATEGORY_ORDER = ["traffic", "greenspace", "forest", "living", "building", "water", "leisure", "industry", "other"];
 
 // Convert palette objects to arrays in the correct order
 const PALETTES = {};
