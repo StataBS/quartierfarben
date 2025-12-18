@@ -965,7 +965,7 @@ def _(export_to_svg, gdf_nutzung, logging):
         bounds=None,  # Use None for full extent, or specify: (minx, miny, maxx, maxy)
         width=2000,
         height=None,  # Auto-calculate from aspect ratio
-        stroke_width=0.5,  # Set to 0 for no outlines
+        stroke_width=0,  # Set to 0 for no outlines
         stroke_color="#000000"
     )
 
