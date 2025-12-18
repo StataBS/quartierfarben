@@ -2,12 +2,12 @@ import intersect from "@turf/intersect";
 import area from "@turf/area";
 import { landuseFieldname } from "$lib/settings";
 
-export default function (map, circleGeom, landuses) {
+export default function (map, polygonGeom, landuses) {
   let sizes = {};
   let sumSizes = 0;
   const landuse = map.queryRenderedFeatures({ layers: ["landuse"] });
   landuse.forEach(function (feature) {
-    const intersection = intersect(circleGeom, feature.geometry);
+    const intersection = intersect(polygonGeom, feature.geometry);
     if (intersection) {
       const size = area(intersection);
       const category = landuses[feature.properties[landuseFieldname]].category;

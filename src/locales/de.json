@@ -10,7 +10,9 @@
     },
     "inputs": {
         "search": "Nach einem Ort im Kanton Basel-Stadt suchen",
-        "noSearchResults": "Keine Suchergebnisse"
+        "noSearchResults": "Keine Suchergebnisse",
+        "wahlkreis": "Wahlkreis",
+        "useCircle": "Kreis verwenden"
     },
     "buttons": {
         "downloadFront": "Herunterladen",

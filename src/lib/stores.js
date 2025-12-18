@@ -19,3 +19,5 @@ export let screenHeight = writable();
 export let isMobile = writable(true);
 export let screenWidth = writable(0);
 export let textVis = writable(settings.defaultTextOnCard);
+export let selectedWahlkreis = writable(null);
+export let analysisMode = writable("circle");

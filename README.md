@@ -138,7 +138,7 @@ The landuse data *Bodenbedeckung* and all other data used in this project can be
 
 ## Adapting to your city
 
-The application is built to be easily implemented in other cities if suitable data is available. All variables to be adapted can be found in [`src/lib/settings.js`](src/lib/settings.js). 
+The application is built to be easily implemented in other cities if suitable data is available. All variables to be adapted can be found in [`src/lib/settings.js`](src/lib/settings.js). The categories and colors can be changed in [`src/lib/colors.json`](src/lib/settings.json)
 The texts can be changed in ['src/locales](src/locales/). Images and tiles have to be exchanged in ['src/static'](src/static).
 The polygon for the right bottom of the card can be changed in [`src/lib/borders.js`](src/lib/borders.js).
 

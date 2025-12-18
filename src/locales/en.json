@@ -10,7 +10,9 @@
     },
     "inputs": {
         "search": "search for a place in Basel-Stadt",
-        "noSearchResults": "No results"
+        "noSearchResults": "No results",
+        "wahlkreis": "Electoral District",
+        "useCircle": "Use circle"
     },
     "buttons": {
         "downloadFront": "Download",

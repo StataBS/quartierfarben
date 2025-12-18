@@ -17,6 +17,8 @@ https://observablehq.com/@d3/treemap
     screenWidth,
     mapCenter,
     circleRadius,
+    selectedWahlkreis,
+    analysisMode,
   } from "$lib/stores.js";
   import {
     categories,
@@ -279,18 +281,32 @@ https://observablehq.com/@d3/treemap
         .attr("stroke-opacity", 0.3).attr("vector-effect", "non-scaling-stroke");
 
 
-      // Render the circle
-      const radiusInDegrees = $circleRadius / 111320; // 1 degree ≈ 111,320 meters
-      const circle = d3.geoCircle().center($mapCenter).radius(radiusInDegrees); // Set radius in degrees
-      map
-        .append("path")
-        .datum(circle())
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr("stroke", "#2f2fa2")
-        .attr("stroke-width", 2)
-        .attr("stroke-opacity", 0.8)
-        .attr("vector-effect", "non-scaling-stroke");
+      // Render the circle or polygon
+      if ($analysisMode === "wahlkreis" && $selectedWahlkreis) {
+        // Render the selected Wahlkreis polygon
+        map
+          .append("path")
+          .datum($selectedWahlkreis)
+          .attr("d", path)
+          .attr("fill", "none")
+          .attr("stroke", "#2f2fa2")
+          .attr("stroke-width", 2)
+          .attr("stroke-opacity", 0.8)
+          .attr("vector-effect", "non-scaling-stroke");
+      } else {
+        // Render the circle
+        const radiusInDegrees = $circleRadius / 111320; // 1 degree ≈ 111,320 meters
+        const circle = d3.geoCircle().center($mapCenter).radius(radiusInDegrees); // Set radius in degrees
+        map
+          .append("path")
+          .datum(circle())
+          .attr("d", path)
+          .attr("fill", "none")
+          .attr("stroke", "#2f2fa2")
+          .attr("stroke-width", 2)
+          .attr("stroke-opacity", 0.8)
+          .attr("vector-effect", "non-scaling-stroke");
+      }
 
       // Park in bottom-right, inside postcard margin
       map.attr(
