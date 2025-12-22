@@ -18,6 +18,7 @@ https://observablehq.com/@d3/treemap
     mapCenter,
     circleRadius,
     selectedWahlkreis,
+    selectedWohnviertel,
     analysisMode,
   } from "$lib/stores.js";
   import {
@@ -287,6 +288,17 @@ https://observablehq.com/@d3/treemap
         map
           .append("path")
           .datum($selectedWahlkreis)
+          .attr("d", path)
+          .attr("fill", "none")
+          .attr("stroke", "#2f2fa2")
+          .attr("stroke-width", 2)
+          .attr("stroke-opacity", 0.8)
+          .attr("vector-effect", "non-scaling-stroke");
+      } else if ($analysisMode === "wohnviertel" && $selectedWohnviertel) {
+        // Render the selected Wohnviertel polygon
+        map
+          .append("path")
+          .datum($selectedWohnviertel)
           .attr("d", path)
           .attr("fill", "none")
           .attr("stroke", "#2f2fa2")

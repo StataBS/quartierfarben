@@ -12,7 +12,11 @@
         "search": "search for a place in Basel-Stadt",
         "noSearchResults": "No results",
         "wahlkreis": "Electoral District",
-        "useCircle": "Use circle"
+        "wohnviertel": "Neighborhood",
+        "useCircle": "Use circle",
+        "analysisMode": "Analysis Mode",
+        "selectWahlkreis": "Select Electoral District",
+        "selectWohnviertel": "Select Neighborhood"
     },
     "buttons": {
         "downloadFront": "Download",

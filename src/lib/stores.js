@@ -20,4 +20,5 @@ export let isMobile = writable(true);
 export let screenWidth = writable(0);
 export let textVis = writable(settings.defaultTextOnCard);
 export let selectedWahlkreis = writable(null);
+export let selectedWohnviertel = writable(null);
 export let analysisMode = writable("circle");

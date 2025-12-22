@@ -5,7 +5,7 @@
   import PostcardFront from "$components/postcard/PostcardFront.svelte";
   import PostcardBack from "$components/postcard/PostcardBack.svelte";
   import Search from "$components/search/Search.svelte";
-  import WahlkreisSelect from "$components/search/WahlkreisSelect.svelte";
+  import AreaSelect from "$components/search/AreaSelect.svelte";
   import PrintAndDownload from "$components/PrintAndDownload.svelte";
   import Footer from "$components/Footer.svelte";
 
@@ -102,7 +102,7 @@
 
     <div class="w-full"><Search /></div>
 
-    <div class="w-full"><WahlkreisSelect /></div>
+    <div class="w-full"><AreaSelect /></div>
 
     <span class="hidden lg:block">
       <PrintAndDownload />

@@ -12,7 +12,11 @@
         "search": "Nach einem Ort im Kanton Basel-Stadt suchen",
         "noSearchResults": "Keine Suchergebnisse",
         "wahlkreis": "Wahlkreis",
-        "useCircle": "Kreis verwenden"
+        "wohnviertel": "Wohnviertel",
+        "useCircle": "Kreis verwenden",
+        "analysisMode": "Analyse-Modus",
+        "selectWahlkreis": "Wahlkreis auswählen",
+        "selectWohnviertel": "Wohnviertel auswählen"
     },
     "buttons": {
         "downloadFront": "Herunterladen",
