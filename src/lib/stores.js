@@ -22,3 +22,4 @@ export let textVis = writable(settings.defaultTextOnCard);
 export let selectedWahlkreis = writable(null);
 export let selectedWohnviertel = writable(null);
 export let analysisMode = writable("circle");
+export let showCoordinates = writable(true); // Toggle to show/hide coordinates on postcard

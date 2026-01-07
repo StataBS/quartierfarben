@@ -21,6 +21,8 @@
     isMobile,
     screenWidth,
     printBackUI,
+    analysisMode,
+    showCoordinates,
   } from "$lib/stores.js";
 
   import en from "$locales/en.json";
@@ -103,6 +105,19 @@
     <div class="w-full"><Search /></div>
 
     <div class="w-full"><AreaSelect /></div>
+
+    {#if $analysisMode === "circle"}
+      <div class="w-full mb-4">
+        <label class="cursor-pointer label">
+          <span class="label-text">{appText.inputs.showCoordinates || "Show coordinates"}</span>
+          <input
+            type="checkbox"
+            bind:checked={$showCoordinates}
+            class="toggle toggle-primary"
+          />
+        </label>
+      </div>
+    {/if}
 
     <span class="hidden lg:block">
       <PrintAndDownload />

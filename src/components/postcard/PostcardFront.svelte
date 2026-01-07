@@ -20,6 +20,7 @@ https://observablehq.com/@d3/treemap
     selectedWahlkreis,
     selectedWohnviertel,
     analysisMode,
+    showCoordinates,
   } from "$lib/stores.js";
   import {
     categories,
@@ -53,8 +54,15 @@ https://observablehq.com/@d3/treemap
     if (!$svg || !titleInput || !wrapper) return;
 
     const topPct   = ((height * 0.85 - postcardMargin) / height) * 100;
-    const fullWidthPct = ((width - 2 * postcardMargin) / width) * 100;
-    const widthPct = $isMobile ? 90 : fullWidthPct;
+    
+    // Get the actual wrapper dimensions to account for scaling
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const wrapperWidth = wrapperRect.width;
+    const postcardWidthPx = width - 2 * postcardMargin;
+    
+    // Calculate width as percentage of wrapper, but based on postcard dimensions
+    // This ensures the input width matches the postcard width regardless of scaling
+    const widthPct = (postcardWidthPx / wrapperWidth) * 100;
 
     Object.assign(titleInput.style, {
       position: "absolute",
@@ -63,7 +71,7 @@ https://observablehq.com/@d3/treemap
       width: `${widthPct}%`,
       transform: "translate(-50%, -50%)",
       transformOrigin: "top left",
-      fontSize: "30px",         // let the wrapper’s scale handle visual size
+      fontSize: "30px",         // let the wrapper's scale handle visual size
       textAlign: "center",
       zIndex: 10
     });
@@ -123,6 +131,22 @@ https://observablehq.com/@d3/treemap
 
   $: dataUpdated($areaSizes);
   $: updateText($textVis);
+  $: if ($svg) {
+    // Update coordinates when mapCenter, showCoordinates, or analysisMode changes
+    $svg.selectAll(".coordinates-text").remove();
+    if ($analysisMode === "circle" && $showCoordinates && $mapCenter) {
+      const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      $svg
+        .append("text")
+        .attr("class", "coordinates-text")
+        .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+        .attr("text-anchor", "middle")
+        .attr("font-family", "IBM Plex Sans Text")
+        .attr("font-size", 14)
+        .attr("fill", "#666666")
+        .text(coordText);
+    }
+  }
 
   function updateText(newText) {
     if (!$svg) {
@@ -135,6 +159,21 @@ https://observablehq.com/@d3/treemap
       .text(function (d) {
         return d;
       });
+    
+    // Update coordinates text
+    $svg.selectAll(".coordinates-text").remove();
+    if ($analysisMode === "circle" && $showCoordinates && $mapCenter) {
+      const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      $svg
+        .append("text")
+        .attr("class", "coordinates-text")
+        .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+        .attr("text-anchor", "middle")
+        .attr("font-family", "IBM Plex Sans Text")
+        .attr("font-size", 14)
+        .attr("fill", "#666666")
+        .text(coordText);
+    }
   }
 
   function redraw(data) {
@@ -195,6 +234,20 @@ https://observablehq.com/@d3/treemap
       .text(function (d) {
         return d;
       });
+
+    // Add coordinates below main text (only in circle mode and when showCoordinates is true)
+    if ($analysisMode === "circle" && $showCoordinates && $mapCenter) {
+      const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      $svg
+        .append("text")
+        .attr("class", "coordinates-text")
+        .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+        .attr("text-anchor", "middle")
+        .attr("font-family", "IBM Plex Sans Text")
+        .attr("font-size", 14)
+        .attr("fill", "#666666")
+        .text(coordText);
+    }
 
     let rect = cell
       .append("rect")

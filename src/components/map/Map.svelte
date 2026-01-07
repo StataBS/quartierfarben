@@ -12,6 +12,8 @@
   import getCircleGeom from "$assets/scripts/getCircleGeom";
   import checkCirleFits from "$assets/scripts/checkCirleFits";
   import bbox from "@turf/bbox";
+  import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
+  import wohnviertelData from "$lib/wohnviertel.js";
   import {
     landuses,
     mapBounds,
@@ -189,7 +191,30 @@
         return;
       }
 
-      $locationText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      // Find which Wohnviertel contains the map center
+      const centerPoint = {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: mC
+        }
+      };
+      
+      let foundWohnviertel = null;
+      for (const feature of wohnviertelData.features) {
+        if (booleanPointInPolygon(centerPoint, feature)) {
+          foundWohnviertel = feature;
+          break;
+        }
+      }
+
+      // Set location text to Wohnviertel name if found, otherwise use coordinates
+      if (foundWohnviertel) {
+        $locationText = foundWohnviertel.properties.wov_name;
+      } else {
+        $locationText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      }
+      
       if ($useLocationAsText) {
         $textVis = $locationText;
       }

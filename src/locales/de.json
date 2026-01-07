@@ -16,7 +16,8 @@
         "useCircle": "Kreis verwenden",
         "analysisMode": "Analyse-Modus",
         "selectWahlkreis": "Wahlkreis auswählen",
-        "selectWohnviertel": "Wohnviertel auswählen"
+        "selectWohnviertel": "Wohnviertel auswählen",
+        "showCoordinates": "Koordinaten anzeigen"
     },
     "buttons": {
         "downloadFront": "Herunterladen",
