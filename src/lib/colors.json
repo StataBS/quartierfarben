@@ -45,15 +45,15 @@
       "other": "#e4e4e4"
     },
     "always": {
-      "traffic": "#949494",
-      "greenspace": "#7BB589",
-      "forest": "#4B8354",
-      "living": "#f9ad9a",
-      "building": "#FFE699",
-      "water": "#5888a6",
-      "leisure": "#efb777",
-      "industry": "#BF9A7A",
-      "other": "#e4e4e4"
+      "traffic": "#a1a4a4",
+      "greenspace": "b2d0bb",
+      "forest": "7eb18e",
+      "living": "#965d6f",
+      "building": "#df8154",
+      "water": "#9ed8ed",
+      "leisure": "#9077b5",
+      "industry": "#ceccb0",
+      "other": "#f5f7f5"
     }
   },
   "categories": {
