@@ -46,8 +46,8 @@
     },
     "always": {
       "traffic": "#a1a4a4",
-      "greenspace": "b2d0bb",
-      "forest": "7eb18e",
+      "greenspace": "#b2d0bb",
+      "forest": "#7eb18e",
       "living": "#965d6f",
       "building": "#df8154",
       "water": "#9ed8ed",
