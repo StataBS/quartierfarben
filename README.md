@@ -142,27 +142,23 @@ The application is built to be easily implemented in other cities if suitable da
 
 | What to adapt | Where |
 |---------------|--------|
-| **App name, map bounds, URLs, etc.** | [`src/lib/settings.js`](src/lib/settings.js) |
-| **Categories and colors** | [`src/lib/colors.json`](src/lib/colors.json) |
-| **Area modes (circle only, or + Wahlkreis, Wohnviertel, etc.)** | [`src/lib/cityConfig.js`](src/lib/cityConfig.js) (see below) |
-| **Texts and labels** | [`src/locales/`](src/locales/) (add keys for new modes in `inputs`) |
-| **Map outline on postcard** | [`src/lib/borders.js`](src/lib/borders.js) |
-| **Tiles and static assets** | `static/` and assets |
+| **App name, map bounds, URLs, etc.** | [`src/lib/settings.js`](src/lib/settings.js) — at least: `projectTitle`, `og_siteName`, `mapBounds`, `initialMapCenter`, `country`, `url` |
+| **Categories and colors** | [`src/lib/colors.json`](src/lib/colors.json) — `categories`, `palettes`, and `landuseMapping` (see Land-use data below) |
+| **Area modes** | [`src/lib/cityConfig.js`](src/lib/cityConfig.js) (see below) |
+| **Texts and labels** | [`src/locales/`](src/locales/) — add keys under `inputs` for new area modes |
+| **Map outline on postcard** | [`src/lib/borders.js`](src/lib/borders.js) — a GeoJSON FeatureCollection (e.g. `export default function () { return { type: "FeatureCollection", features: [...] }; }`) |
+| **Tiles and static assets** | `static/` (tiles), plus any images |
 
 ### Area modes (circle, Wahlkreis, Wohnviertel, …)
 
-Analysis modes are configured in [`src/lib/cityConfig.js`](src/lib/cityConfig.js). The **circle** mode (analyse land use in a radius around a point) is always available. You can add optional polygon modes (e.g. electoral districts, neighbourhoods) so users can pick an area from a dropdown instead of the map.
+Analysis modes are in [`src/lib/cityConfig.js`](src/lib/cityConfig.js). **Circle** mode (radius around a point) is always available; you can add polygon modes (e.g. districts, neighbourhoods) so users pick an area from a dropdown.
 
-- **Circle only (e.g. for another city):** In `cityConfig.js`, set `areaModes` to a single entry:  
-  `[{ id: "circle", labelKey: "useCircle", default: true }]`  
-  and set `locationLabelPolygonModeId = null` if you don’t have a polygon layer for location names.
-- **Circle + polygon modes (like Basel):** Keep the default `areaModes` and the imports for `wahlkreise.js` / `wohnviertel.js`. Each polygon mode needs:
-  - `id` (used in URL, e.g. `wahlkreis`),
-  - `labelKey` and `selectLabelKey` (keys in `src/locales/*.json` under `inputs`),
-  - `data` (GeoJSON FeatureCollection, e.g. from `$lib/wahlkreise.js`),
-  - `idProperty` and `nameProperty` (property names on each feature for ID and display name).
+- **Circle only:** Set `areaModes` to `[{ id: "circle", labelKey: "useCircle", default: true }]`, set `locationLabelPolygonModeId = null`, and **remove or comment out** the `import wahlkreiseData` / `import wohnviertelData` lines (and any polygon entries in `areaModes`) so the file doesn’t reference missing data.
+- **Circle + polygon modes:** Keep the default. Each polygon mode needs `id`, `labelKey`, `selectLabelKey`, `data` (GeoJSON), `idProperty`, and `nameProperty`. Add matching keys in `src/locales/*.json` under `inputs` and a GeoJSON module per mode. Optionally set `locationLabelPolygonModeId` to the mode whose polygons supply the location name in circle mode (e.g. neighbourhood under the coordinates).
 
-Add corresponding locale keys (e.g. `inputs.bezirk`, `inputs.selectBezirk`) and a GeoJSON file for each new mode. Optionally set `locationLabelPolygonModeId` to the id of the mode whose polygons should be used to show the location name when in circle mode (e.g. neighbourhood name under the coordinates).
+### Land-use data
+
+If you use **your own** land-use tiles (see Data & Processing for how Basel builds them): vector tiles must expose a property whose name is set in `settings.js` as `landuseFieldname` (Basel: `"nutzung"`). Values in that property are mapped to diagram categories via `colors.json` → `landuseMapping`; category labels and palette come from `categories` and `palettes` in the same file. The app expects the tile layer name used in your map style (e.g. `landuse-data` in the tippecanoe example).
 
 ## Kiosk mode
 
