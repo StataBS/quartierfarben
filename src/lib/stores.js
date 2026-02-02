@@ -19,7 +19,7 @@ export let screenHeight = writable();
 export let isMobile = writable(true);
 export let screenWidth = writable(0);
 export let textVis = writable(settings.defaultTextOnCard);
-export let selectedWahlkreis = writable(null);
-export let selectedWohnviertel = writable(null);
+/** Selected polygon feature when analysisMode is a polygon mode (e.g. wahlkreis, wohnviertel). Null in circle mode. */
+export let selectedAreaFeature = writable(null);
 export let analysisMode = writable("circle");
 export let showCoordinates = writable(true); // Toggle to show/hide coordinates on postcard

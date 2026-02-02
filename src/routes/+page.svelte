@@ -14,6 +14,7 @@
     og_siteName,
     url
   } from "$lib/settings.js"
+  import { CIRCLE_MODE_ID } from "$lib/cityConfig.js";
   import {
     dimensions,
     lang,
@@ -106,7 +107,7 @@
 
     <div class="w-full"><AreaSelect /></div>
 
-    {#if $analysisMode === "circle"}
+    {#if $analysisMode === CIRCLE_MODE_ID}
       <div class="w-full mb-4">
         <label class="cursor-pointer label">
           <span class="label-text">{appText.inputs.showCoordinates || "Show coordinates"}</span>

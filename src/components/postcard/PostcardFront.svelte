@@ -17,8 +17,7 @@ https://observablehq.com/@d3/treemap
     screenWidth,
     mapCenter,
     circleRadius,
-    selectedWahlkreis,
-    selectedWohnviertel,
+    selectedAreaFeature,
     analysisMode,
     showCoordinates,
   } from "$lib/stores.js";
@@ -27,6 +26,7 @@ https://observablehq.com/@d3/treemap
     labelContrast,
     postcardMargin
   } from "$lib/settings.js";
+  import { getAreaModeConfig, CIRCLE_MODE_ID } from "$lib/cityConfig.js";
 
   import { onMount } from "svelte";
 
@@ -134,7 +134,7 @@ https://observablehq.com/@d3/treemap
   $: if ($svg) {
     // Update coordinates when mapCenter, showCoordinates, or analysisMode changes
     $svg.selectAll(".coordinates-text").remove();
-    if ($analysisMode === "circle" && $showCoordinates && $mapCenter) {
+    if ($analysisMode === CIRCLE_MODE_ID && $showCoordinates && $mapCenter) {
       const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
       $svg
         .append("text")
@@ -162,7 +162,7 @@ https://observablehq.com/@d3/treemap
     
     // Update coordinates text
     $svg.selectAll(".coordinates-text").remove();
-    if ($analysisMode === "circle" && $showCoordinates && $mapCenter) {
+    if ($analysisMode === CIRCLE_MODE_ID && $showCoordinates && $mapCenter) {
       const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
       $svg
         .append("text")
@@ -236,7 +236,7 @@ https://observablehq.com/@d3/treemap
       });
 
     // Add coordinates below main text (only in circle mode and when showCoordinates is true)
-    if ($analysisMode === "circle" && $showCoordinates && $mapCenter) {
+    if ($analysisMode === CIRCLE_MODE_ID && $showCoordinates && $mapCenter) {
       const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
       $svg
         .append("text")
@@ -336,22 +336,10 @@ https://observablehq.com/@d3/treemap
 
 
       // Render the circle or polygon
-      if ($analysisMode === "wahlkreis" && $selectedWahlkreis) {
-        // Render the selected Wahlkreis polygon
+      if ($selectedAreaFeature) {
         map
           .append("path")
-          .datum($selectedWahlkreis)
-          .attr("d", path)
-          .attr("fill", "none")
-          .attr("stroke", "#2f2fa2")
-          .attr("stroke-width", 2)
-          .attr("stroke-opacity", 0.8)
-          .attr("vector-effect", "non-scaling-stroke");
-      } else if ($analysisMode === "wohnviertel" && $selectedWohnviertel) {
-        // Render the selected Wohnviertel polygon
-        map
-          .append("path")
-          .datum($selectedWohnviertel)
+          .datum($selectedAreaFeature)
           .attr("d", path)
           .attr("fill", "none")
           .attr("stroke", "#2f2fa2")

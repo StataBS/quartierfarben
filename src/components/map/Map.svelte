@@ -13,7 +13,11 @@
   import checkCirleFits from "$assets/scripts/checkCirleFits";
   import bbox from "@turf/bbox";
   import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-  import wohnviertelData from "$lib/wohnviertel.js";
+  import {
+    getAreaModeConfig,
+    locationLabelPolygonModeId,
+    CIRCLE_MODE_ID
+  } from "$lib/cityConfig.js";
   import {
     landuses,
     mapBounds,
@@ -36,8 +40,7 @@
     newBounds,
     isMobile,
     lang,
-    selectedWahlkreis,
-    selectedWohnviertel,
+    selectedAreaFeature,
     analysisMode
   } from "$lib/stores.js";
 
@@ -87,30 +90,18 @@
   let lastAreaId = null;
   let lastAreaType = null;
   
-  $: if (($selectedWahlkreis && $analysisMode === "wahlkreis") || 
-         ($selectedWohnviertel && $analysisMode === "wohnviertel")) {
+  $: if ($selectedAreaFeature && $analysisMode !== CIRCLE_MODE_ID) {
     if (map && map.loaded()) {
-      let currentId, currentType, selectedFeature;
-      
-      if ($analysisMode === "wahlkreis" && $selectedWahlkreis) {
-        currentId = $selectedWahlkreis.properties.objid;
-        currentType = "wahlkreis";
-        selectedFeature = $selectedWahlkreis;
-      } else if ($analysisMode === "wohnviertel" && $selectedWohnviertel) {
-        currentId = $selectedWohnviertel.properties.wov_id;
-        currentType = "wohnviertel";
-        selectedFeature = $selectedWohnviertel;
-      }
-      
-      if (currentId && (lastAreaId !== currentId || lastAreaType !== currentType)) {
+      const modeConfig = getAreaModeConfig($analysisMode);
+      const currentId = modeConfig && $selectedAreaFeature.properties[modeConfig.idProperty];
+      if (currentId && (lastAreaId !== currentId || lastAreaType !== $analysisMode)) {
         lastAreaId = currentId;
-        lastAreaType = currentType;
-        const bounds = bbox(selectedFeature);
+        lastAreaType = $analysisMode;
+        const bounds = bbox($selectedAreaFeature);
         map.fitBounds(
           [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
           { padding: 50, duration: 1000 }
         );
-        // Trigger redraw after fitBounds completes
         setTimeout(() => {
           if (map && map.getLayer("landuse")) {
             drawAndCount(map);
@@ -119,15 +110,13 @@
       }
     }
   }
-  
-  // Reset when switching back to circle mode
-  $: if ($analysisMode === "circle") {
+
+  $: if ($analysisMode === CIRCLE_MODE_ID) {
     lastAreaId = null;
     lastAreaType = null;
   }
 
-  // Remove hash (coordinates) from URL when in wahlkreis/wohnviertel modes
-  $: if (map && ($analysisMode === "wahlkreis" || $analysisMode === "wohnviertel")) {
+  $: if (map && $analysisMode !== CIRCLE_MODE_ID) {
     if (window.location.hash) {
       const url = new URL(window.location.href);
       url.hash = "";
@@ -145,29 +134,16 @@
     let usePolygon = false;
     let selectedFeature = null;
 
-    if ($analysisMode === "wahlkreis" && $selectedWahlkreis) {
-      // Use the selected Wahlkreis polygon
+    const modeConfig = getAreaModeConfig($analysisMode);
+    if (modeConfig && modeConfig.data && $selectedAreaFeature) {
       usePolygon = true;
-      selectedFeature = $selectedWahlkreis;
-      polygonGeom = $selectedWahlkreis.geometry;
-      const center = bbox($selectedWahlkreis);
+      selectedFeature = $selectedAreaFeature;
+      polygonGeom = $selectedAreaFeature.geometry;
+      const center = bbox($selectedAreaFeature);
       const centerLon = (center[0] + center[2]) / 2;
       const centerLat = (center[1] + center[3]) / 2;
       $mapCenter = [centerLon.toFixed(3), centerLat.toFixed(3)];
-      $locationText = $selectedWahlkreis.properties.wahlkreis;
-      if ($useLocationAsText) {
-        $textVis = $locationText;
-      }
-    } else if ($analysisMode === "wohnviertel" && $selectedWohnviertel) {
-      // Use the selected Wohnviertel polygon
-      usePolygon = true;
-      selectedFeature = $selectedWohnviertel;
-      polygonGeom = $selectedWohnviertel.geometry;
-      const center = bbox($selectedWohnviertel);
-      const centerLon = (center[0] + center[2]) / 2;
-      const centerLat = (center[1] + center[3]) / 2;
-      $mapCenter = [centerLon.toFixed(3), centerLat.toFixed(3)];
-      $locationText = $selectedWohnviertel.properties.wov_name;
+      $locationText = $selectedAreaFeature.properties[modeConfig.nameProperty];
       if ($useLocationAsText) {
         $textVis = $locationText;
       }
@@ -191,26 +167,23 @@
         return;
       }
 
-      // Find which Wohnviertel contains the map center
-      const centerPoint = {
-        type: "Feature",
-        geometry: {
-          type: "Point",
-          coordinates: mC
-        }
-      };
-      
-      let foundWohnviertel = null;
-      for (const feature of wohnviertelData.features) {
-        if (booleanPointInPolygon(centerPoint, feature)) {
-          foundWohnviertel = feature;
-          break;
+      // Optionally resolve location name from a polygon layer (e.g. wohnviertel)
+      const labelModeConfig = locationLabelPolygonModeId && getAreaModeConfig(locationLabelPolygonModeId);
+      let foundFeature = null;
+      if (labelModeConfig?.data?.features) {
+        const centerPoint = {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: mC }
+        };
+        for (const feature of labelModeConfig.data.features) {
+          if (booleanPointInPolygon(centerPoint, feature)) {
+            foundFeature = feature;
+            break;
+          }
         }
       }
-
-      // Set location text to Wohnviertel name if found, otherwise use coordinates
-      if (foundWohnviertel) {
-        $locationText = foundWohnviertel.properties.wov_name;
+      if (foundFeature) {
+        $locationText = foundFeature.properties[labelModeConfig.nameProperty];
       } else {
         $locationText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
       }
@@ -233,8 +206,7 @@
   };
 
   onMount(() => {
-    // Disable hash if starting in wahlkreis/wohnviertel mode
-    const enableHash = $analysisMode === "circle";
+    const enableHash = $analysisMode === CIRCLE_MODE_ID;
     
     map = new maplibregl.Map({
       container: "map", // container id
@@ -249,8 +221,7 @@
       zoom: 13,
     });
     
-    // Remove hash if in wahlkreis/wohnviertel mode on mount
-    if ($analysisMode === "wahlkreis" || $analysisMode === "wohnviertel") {
+    if ($analysisMode !== CIRCLE_MODE_ID) {
       if (window.location.hash) {
         const url = new URL(window.location.href);
         url.hash = "";
@@ -263,46 +234,32 @@
 
       map.on("moveend", function (e) {
         const canvas = document.getElementById("myCanvas");
-        if ($analysisMode === "wahlkreis" && $selectedWahlkreis) {
-          drawCanvasPolygon(map, canvas, $selectedWahlkreis.geometry);
-        } else if ($analysisMode === "wohnviertel" && $selectedWohnviertel) {
-          drawCanvasPolygon(map, canvas, $selectedWohnviertel.geometry);
+        if ($selectedAreaFeature) {
+          drawCanvasPolygon(map, canvas, $selectedAreaFeature.geometry);
         } else {
           drawCanvasCircle(map, canvas, $circleRadius);
         }
-        // Remove hash if in wahlkreis/wohnviertel mode
-        if ($analysisMode === "wahlkreis" || $analysisMode === "wohnviertel") {
-          if (window.location.hash) {
-            const url = new URL(window.location.href);
-            url.hash = "";
-            window.history.replaceState({}, "", url.toString());
-          }
+        if ($analysisMode !== CIRCLE_MODE_ID && window.location.hash) {
+          const url = new URL(window.location.href);
+          url.hash = "";
+          window.history.replaceState({}, "", url.toString());
         }
-        setTimeout(() => {
-          drawAndCount(map);
-        }, 100);
+        setTimeout(() => drawAndCount(map), 100);
       });
 
       map.on("zoomend", function (e) {
         const canvas = document.getElementById("myCanvas");
-        if ($analysisMode === "wahlkreis" && $selectedWahlkreis) {
-          drawCanvasPolygon(map, canvas, $selectedWahlkreis.geometry);
-        } else if ($analysisMode === "wohnviertel" && $selectedWohnviertel) {
-          drawCanvasPolygon(map, canvas, $selectedWohnviertel.geometry);
+        if ($selectedAreaFeature) {
+          drawCanvasPolygon(map, canvas, $selectedAreaFeature.geometry);
         } else {
           drawCanvasCircle(map, canvas, $circleRadius);
         }
-        // Remove hash if in wahlkreis/wohnviertel mode
-        if ($analysisMode === "wahlkreis" || $analysisMode === "wohnviertel") {
-          if (window.location.hash) {
-            const url = new URL(window.location.href);
-            url.hash = "";
-            window.history.replaceState({}, "", url.toString());
-          }
+        if ($analysisMode !== CIRCLE_MODE_ID && window.location.hash) {
+          const url = new URL(window.location.href);
+          url.hash = "";
+          window.history.replaceState({}, "", url.toString());
         }
-        setTimeout(() => {
-          drawAndCount(map);
-        }, 100);
+        setTimeout(() => drawAndCount(map), 100);
       });
     });
   });
@@ -351,18 +308,17 @@
     </svg>
   </button>
 
-  {#if $analysisMode === "circle"}
+  {#if $analysisMode === CIRCLE_MODE_ID}
     <div class="absolute right-2 bottom-8 z-50 text-md">
       {appText.map.radius}: {$circleRadius}m
     </div>
-  {:else if $selectedWahlkreis}
-    <div class="absolute right-2 bottom-8 z-50 text-md">
-      {$selectedWahlkreis.properties.wahlkreis}
-    </div>
-  {:else if $selectedWohnviertel}
-    <div class="absolute right-2 bottom-8 z-50 text-md">
-      {$selectedWohnviertel.properties.wov_name}
-    </div>
+  {:else if $selectedAreaFeature}
+    {@const modeConfig = getAreaModeConfig($analysisMode)}
+    {#if modeConfig}
+      <div class="absolute right-2 bottom-8 z-50 text-md">
+        {$selectedAreaFeature.properties[modeConfig.nameProperty]}
+      </div>
+    {/if}
   {/if}
   <div
     class="absolute right-0 bottom-12 z-50 form-control w-fit pointer-events-auto"

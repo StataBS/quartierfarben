@@ -138,9 +138,31 @@ The landuse data *Bodenbedeckung* and all other data used in this project can be
 
 ## Adapting to your city
 
-The application is built to be easily implemented in other cities if suitable data is available. All variables to be adapted can be found in [`src/lib/settings.js`](src/lib/settings.js). The categories and colors can be changed in [`src/lib/colors.json`](src/lib/settings.json)
-The texts can be changed in ['src/locales](src/locales/). Images and tiles have to be exchanged in ['src/static'](src/static).
-The polygon for the right bottom of the card can be changed in [`src/lib/borders.js`](src/lib/borders.js).
+The application is built to be easily implemented in other cities if suitable data is available.
+
+| What to adapt | Where |
+|---------------|--------|
+| **App name, map bounds, URLs, etc.** | [`src/lib/settings.js`](src/lib/settings.js) |
+| **Categories and colors** | [`src/lib/colors.json`](src/lib/colors.json) |
+| **Area modes (circle only, or + Wahlkreis, Wohnviertel, etc.)** | [`src/lib/cityConfig.js`](src/lib/cityConfig.js) (see below) |
+| **Texts and labels** | [`src/locales/`](src/locales/) (add keys for new modes in `inputs`) |
+| **Map outline on postcard** | [`src/lib/borders.js`](src/lib/borders.js) |
+| **Tiles and static assets** | `static/` and assets |
+
+### Area modes (circle, Wahlkreis, Wohnviertel, …)
+
+Analysis modes are configured in [`src/lib/cityConfig.js`](src/lib/cityConfig.js). The **circle** mode (analyse land use in a radius around a point) is always available. You can add optional polygon modes (e.g. electoral districts, neighbourhoods) so users can pick an area from a dropdown instead of the map.
+
+- **Circle only (e.g. for another city):** In `cityConfig.js`, set `areaModes` to a single entry:  
+  `[{ id: "circle", labelKey: "useCircle", default: true }]`  
+  and set `locationLabelPolygonModeId = null` if you don’t have a polygon layer for location names.
+- **Circle + polygon modes (like Basel):** Keep the default `areaModes` and the imports for `wahlkreise.js` / `wohnviertel.js`. Each polygon mode needs:
+  - `id` (used in URL, e.g. `wahlkreis`),
+  - `labelKey` and `selectLabelKey` (keys in `src/locales/*.json` under `inputs`),
+  - `data` (GeoJSON FeatureCollection, e.g. from `$lib/wahlkreise.js`),
+  - `idProperty` and `nameProperty` (property names on each feature for ID and display name).
+
+Add corresponding locale keys (e.g. `inputs.bezirk`, `inputs.selectBezirk`) and a GeoJSON file for each new mode. Optionally set `locationLabelPolygonModeId` to the id of the mode whose polygons should be used to show the location name when in circle mode (e.g. neighbourhood name under the coordinates).
 
 ## Kiosk mode
 
