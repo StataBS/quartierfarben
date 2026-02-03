@@ -48,7 +48,7 @@ This repository does **not** include the generated tiles. Tiles for the date 03.
 
 The data processing was done in Python and marimo.
 
-Check it out on molab: [![Open in molab](https://molab.marimo.io/molab-shield.png)](https://molab.marimo.io/notebooks/nb_SEKYjCXDo7Ujz1tCHYiiDg)
+Check it out on molab: [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/notebooks/nb_5zPQvSyNU9g1i8j2vkehRo)
 
 ### Sources (WFS)
 All datasets are retrieved from the Canton Basel-Stadt WFS using robust requests with retries and backoff.
