@@ -40,9 +40,13 @@ You can preview the production build with `npm run preview`.
 
 To deploy your app, simply copy the `build` folder to your web server.
 
-## Data & Processing
+## Data Processing Pipeline & Tile-Creation
 
-The data processing was done in Python and marimo. 
+This repository does **not** include the generated tiles. Tiles for the date 03.02.2026 can be downloaded from an [older repository](https://github.com/opendatabs/quartierfarben/tree/main/static/tiles), where tiles were generated daily using GitHub Actions. To generate tiles from the latest data, follow the steps below.
+
+---
+
+The data processing was done in Python and marimo.
 
 Check it out on molab: [![Open in molab](https://molab.marimo.io/molab-shield.png)](https://molab.marimo.io/notebooks/nb_SEKYjCXDo7Ujz1tCHYiiDg)
 
