@@ -7,7 +7,14 @@ export default function (map, polygonGeom, landuses) {
   let sumSizes = 0;
   const landuse = map.queryRenderedFeatures({ layers: ["landuse"] });
   landuse.forEach(function (feature) {
-    const intersection = intersect(polygonGeom, feature.geometry);
+    // Turf v7: intersect(featureCollection) with at least 2 polygon features
+    const intersection = intersect({
+      type: "FeatureCollection",
+      features: [
+        { type: "Feature", geometry: polygonGeom, properties: {} },
+        { type: "Feature", geometry: feature.geometry, properties: feature.properties || {} },
+      ],
+    });
     if (intersection) {
       const size = area(intersection);
       const category = landuses[feature.properties[landuseFieldname]].category;
