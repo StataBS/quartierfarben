@@ -173,7 +173,7 @@ opendatabs.github.io/quartierfarben?kiosk#13/48.20996/16.3704
 You can start most browsers in kiosk mode, which causes the app to be displayed in full screen, disables any user interface elements, and supports printing without showing a dialog. E.g. for Firefox, the command to launch the app in kiosk mode would be:
 
 ```
-"C:\Program Files\Mozilla Firefox\firefox.exe" -kiosk -private-window https://cartolab.at/graetzlfarben/?kiosk
+"C:\Program Files\Mozilla Firefox\firefox.exe" -kiosk -private-window https://opendatabs.github.io/quartierfarben?kiosk
 ```
 
 ## Contributing
@@ -182,18 +182,17 @@ Before you create a pull request, write an issue so we can discuss your changes.
 
 ## Contributors
 
-ODIS Berlin / CityLAB Berlin has made the biggest contribution by developing and coding the initial [Kiezcolors](https://kiezcolors.odis-berlin.de) tool. On part of the research unit cartography at TU Wien, [Ester Scheck](https://github.com/ester-t-s) and [Florian Ledermann](https://github.com/floledermann) mostly worked on the code and the documentation while Sacha Schlumpf and Andrea Binn supported with feedback and brainstorming ideas.
+ODIS Berlin / CityLAB Berlin has made the biggest contribution by developing and coding the initial [Kiezcolors](https://kiezcolors.odis-berlin.de) tool. On part of the research unit cartography at TU Wien, [Ester Scheck](https://github.com/ester-t-s) and [Florian Ledermann](https://github.com/floledermann) mostly worked on the code and the documentation while Sacha Schlumpf and Andrea Binn supported with feedback and brainstorming ideas. In the Statistisches Amt Kanton Basel-Stadt [Orhan Saeedi](https://github.com/osaeedi) and [Felix Michel](https://github.com/felixmichel) adapted it for their use case.
 
 ## Contact
 
 If you have any questions, please contact [opendata@bs.ch](mailto:opendata@bs.ch)
 
-
 ## Content Licensing
 
-Texts and content available as [CC BY](https://creativecommons.org/licenses/by/3.0/de/).
-
+Texts and content available as [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/de/).
 
 ## Related Projects
 
 [Kiezcolors Berlin](https://kiezcolors.odis-berlin.de)
+[Grätzlfarben Wien](https://cartolab.at/graetzlfarben/)
