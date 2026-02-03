@@ -628,17 +628,21 @@ def _(mo):
 
 
 @app.cell
-def _(json, logging, os, pd):
-    # Load color configuration from JSON file
+def _(json, logging, os, pd, requests):
+    # Load color configuration: try local file first, then GitHub (for molab etc.)
     config_path = os.path.join(os.path.dirname(__file__), "src", "lib", "colors.json")
-    
+
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             color_config = json.load(f)
         logging.info(f"Loaded color configuration from {config_path}")
     except FileNotFoundError:
-        logging.error(f"Color configuration file not found: {config_path}")
-        raise
+        colors_json_url = "https://raw.githubusercontent.com/StataBS/quartierfarben/main/src/lib/colors.json"
+        logging.info(f"Local colors.json not found, fetching from GitHub: {colors_json_url}")
+        resp = requests.get(colors_json_url, timeout=10)
+        resp.raise_for_status()
+        color_config = resp.json()
+        logging.info("Loaded color configuration from GitHub")
     except json.JSONDecodeError as e:
         logging.error(f"Error parsing color configuration JSON: {e}")
         raise
