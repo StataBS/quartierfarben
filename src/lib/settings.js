@@ -3,13 +3,13 @@
 // Load color configuration from JSON file (single source of truth)
 import colorConfig from './colors.json';
 
-export const projectTitle = "Quartierfarben Basel-Stadt";
+export const projectTitle = "Quartierfarben";
 
 export const og_siteName = "Statistisches Amt @ Kanton Basel-Stadt";
 
 export const country = "CH"; //for Nominatim request
 
-export const url = "https://opendatabs.github.io/quartierfarben/"; //for sharing
+export const url = "https://statistik.bs/quartierfarben/"; //for sharing
 
 // App settings and defaults
 

@@ -1,12 +1,6 @@
 <script>
-  import { 
-    dimensions,
-    lang
-   } from "$lib/stores.js";
-  import {
-    categories,
-    analysisRadiusInMeters
-  } from "$lib/settings";
+  import { dimensions, lang } from "$lib/stores.js";
+  import { categories } from "$lib/settings";
 
   import MulitlineText from "./MulitlineText.svelte";
   const width = $dimensions[1],
@@ -17,7 +11,7 @@
 
   let appText = {};
   $: {
-    if ($lang === 'en') {
+    if ($lang === "en") {
       appText = en;
     } else {
       appText = de;
@@ -51,21 +45,8 @@
       />
     </g>
 
-    <g transform="translate(15,75)">
-      <MulitlineText
-        text={appText.postcard.back.greetings}
-        x="10"
-        y="38"
-        width="275"
-        lineHeight="1.4"
-        fontSize="11"
-        fontFamily="IBM Plex Sans Text"
-        fill="#292929"
-      />
-    </g>
-
     <g transform="translate(15,130)">
-      {#each Object.values(categories) as { color, name, name_en}, i}
+      {#each Object.values(categories) as { color, name, name_en }, i}
         <rect
           classs="rect-legend"
           width="10"
@@ -79,28 +60,10 @@
           text-anchor="start"
           font-family="IBM Plex Sans Text"
           font-size="11"
-          fill="#292929">{ $lang == 'en' ? name_en : name }</text
+          fill="#292929">{$lang == "en" ? name_en : name}</text
         >
       {/each}
     </g>
-
-    <g transform="translate(15,310)">
-      <MulitlineText
-        text={appText.postcard.back.footer.replace(
-          "{analysisRadiusInMeters}",
-          analysisRadiusInMeters
-        )}
-        x="10"
-        y="48"
-        width="275"
-        lineHeight="1.4"
-        fontSize="9"
-        fontFamily="IBM Plex Sans Text"
-        fontStyle="italic"
-        fontFill="rgb(148, 148, 148)"
-      />
-    </g>
-
     <!-- lines and rectangle for postcard layout on the right-->
     <line
       y1="38"
