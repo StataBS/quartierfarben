@@ -29,7 +29,8 @@
             "footer": ""
         },
         "back": {
-            "description": "Wie viel Platz brauchen wir eigentlich, um zu wohnen, uns fortzubewegen und mal tief durchzuatmen?$Besuchen Sie statistik.bs/quartierfarben und entdecken Sie Ihre Nachbarschaft."
+            "description": "Wie viel Platz brauchen wir eigentlich, um zu wohnen, uns fortzubewegen und mal tief durchzuatmen?",
+            "footer": "Besuchen Sie statistik.bs/quartierfarben und entdecken Sie Ihre Nachbarschaft."
         }
     },
     "map": {

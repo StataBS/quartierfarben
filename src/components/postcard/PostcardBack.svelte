@@ -17,6 +17,14 @@
       appText = de;
     }
   }
+
+  // Kategorien in zwei Spalten aufteilen
+  $: categoryEntries = Object.values(categories);
+  $: leftColumn = categoryEntries.slice(
+    0,
+    Math.ceil(categoryEntries.length / 2)
+  );
+  $: rightColumn = categoryEntries.slice(Math.ceil(categoryEntries.length / 2));
 </script>
 
 <svg
@@ -32,12 +40,32 @@
   <rect x="0" y="0" width="630" height="444" fill="#fff" />
 
   <g>
-    <g transform="translate(15,5)">
+    <!-- Vertikale Trennlinie zwischen links und rechts -->
+    <line
+      y1="30"
+      x1="315"
+      y2="414"
+      x2="315"
+      style="stroke:rgb(0, 0, 0);stroke-width:0.5"
+    />
+
+    <!-- LINKE SEITE -->
+    <!-- Horizontale Trennlinie über Beschreibungstext -->
+    <line
+      y1="258"
+      x1="20"
+      y2="258"
+      x2="295"
+      style="stroke:rgb(0, 0, 0);stroke-width:0.5"
+    />
+
+    <!-- Beschreibungstext -->
+    <g transform="translate(15, 270)">
       <MulitlineText
         text={appText.postcard.back.description}
         x="10"
-        y="38"
-        width="275"
+        y="20"
+        width="270"
         lineHeight="1.4"
         fontSize="11"
         fontFamily="IBM Plex Sans Text"
@@ -45,40 +73,55 @@
       />
     </g>
 
-    <g transform="translate(15,130)">
-      {#each Object.values(categories) as { color, name, name_en }, i}
+    <!-- Legende zweispaltig -->
+    <g transform="translate(15, 340)">
+      <!-- Linke Spalte -->
+      {#each leftColumn as { color, name, name_en }, i}
         <rect
-          classs="rect-legend"
+          class="rect-legend"
           width="10"
           height="10"
           fill={color}
-          transform={`translate(10,${10 + i * 16})`}
+          transform={`translate(10,${10 + i * 18})`}
         />
         <text
-          classs="text-legend"
-          transform={`translate(25,${19 + i * 16})`}
+          class="text-legend"
+          transform={`translate(25,${19 + i * 18})`}
           text-anchor="start"
           font-family="IBM Plex Sans Text"
-          font-size="11"
+          font-size="10"
+          fill="#292929">{$lang == "en" ? name_en : name}</text
+        >
+      {/each}
+
+      <!-- Rechte Spalte -->
+      {#each rightColumn as { color, name, name_en }, i}
+        <rect
+          class="rect-legend"
+          width="10"
+          height="10"
+          fill={color}
+          transform={`translate(150,${10 + i * 18})`}
+        />
+        <text
+          class="text-legend"
+          transform={`translate(165,${19 + i * 18})`}
+          text-anchor="start"
+          font-family="IBM Plex Sans Text"
+          font-size="10"
           fill="#292929">{$lang == "en" ? name_en : name}</text
         >
       {/each}
     </g>
-    <!-- lines and rectangle for postcard layout on the right-->
-    <line
-      y1="38"
-      x1="315"
-      y2="392"
-      x2="315"
-      style="stroke:rgb(200, 200, 200);stroke-width:1"
-    />
 
+    <!-- RECHTE SEITE -->
+    <!-- Adresslinien -->
     <line
       y1="258"
       x1="600"
       y2="258"
       x2="345"
-      style="stroke:rgb(200, 200, 200);stroke-width:1"
+      style="stroke:rgb(0, 0, 0);stroke-width:0.5"
     />
 
     <line
@@ -86,7 +129,7 @@
       x1="600"
       y2="308"
       x2="345"
-      style="stroke:rgb(200, 200, 200);stroke-width:1"
+      style="stroke:rgb(0, 0, 0);stroke-width:0.5"
     />
 
     <line
@@ -94,13 +137,27 @@
       x1="600"
       y2="358"
       x2="345"
-      style="stroke:rgb(200, 200, 200);stroke-width:1"
+      style="stroke:rgb(0, 0, 0);stroke-width:0.5"
     />
 
+    <g transform="translate(335, 380)">
+      <MulitlineText
+        text={appText.postcard.back.footer}
+        x="10"
+        y="20"
+        width="270"
+        lineHeight="1.4"
+        fontSize="11"
+        fontFamily="IBM Plex Sans Text"
+        fill="#292929"
+      />
+    </g>
+
+    <!-- Briefmarkenfeld -->
     <rect
       width="90"
       height="120"
-      style="stroke:rgb(200, 200, 200);stroke-width:1"
+      style="stroke:rgb(0, 0, 0);stroke-width:0.5"
       transform="translate(510,30)"
       fill="transparent"
     />
