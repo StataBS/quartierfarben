@@ -1,13 +1,13 @@
 <script>
   import { newBounds, lang } from "$lib/stores.js";
-  import {mapBounds} from "$lib/settings.js";
+  import { mapBounds } from "$lib/settings.js";
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
 
   let appText = {};
   $: {
-    if ($lang === 'en') {
+    if ($lang === "en") {
       appText = en;
     } else {
       appText = de;
@@ -28,7 +28,16 @@
     }
 
     if (event.keyCode === 13 || event.target.getAttribute("id") === "submit") {
-      let geocoderQuery = 'https://nominatim.openstreetmap.org/search.php?viewbox='+mapBounds[0,0]+','+mapBounds[0,1]+','+mapBounds[1,0]+','+mapBounds[1,1]+'&bounded=1&q=${searchText}&format=json&limit=5';
+      let geocoderQuery =
+        "https://nominatim.openstreetmap.org/search.php?viewbox=" +
+        mapBounds[(0, 0)] +
+        "," +
+        mapBounds[(0, 1)] +
+        "," +
+        mapBounds[(1, 0)] +
+        "," +
+        mapBounds[(1, 1)] +
+        "&bounded=1&q=${searchText}&format=json&limit=5";
 
       // get the data
       let fetchResults = await fetch(geocoderQuery)

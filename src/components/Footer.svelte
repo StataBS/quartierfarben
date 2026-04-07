@@ -42,7 +42,7 @@
   }
 </script>
 
-<div class=" text-sm text-gray-400 mt-4">
+<div class=" text-sm text-gray-500 mt-4">
   <p>
     {@html appText.footer.dataSources}
 
