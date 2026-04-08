@@ -48,8 +48,8 @@ export const postcardMargin = 0; // in layout units,
 
 //should be bigger than city boundingbox, because city boundingbox borders should be possible to be dragged to center of screen, where the landuse analysis takes place
 export const mapBounds = [
-    [7.56, 47.52], // Southwest coordinates (enger)
-    [7.68, 47.60], // Northeast coordinates (enger)
+    [7.4, 47.47], // Southwest coordinates
+    [7.85, 47.66], // Northeast coordinates
   ];
 
 export const initialMapCenter = [7.58979, 47.56022]; // Basel
