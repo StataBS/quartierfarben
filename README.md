@@ -146,7 +146,21 @@ The application is built to be easily implemented in other cities if suitable da
 
 | What to adapt | Where |
 |---------------|--------|
-| **App name, map bounds, URLs, etc.** | [`src/lib/settings.js`](src/lib/settings.js) — at least: `projectTitle`, `og_siteName`, `mapBounds`, `initialMapCenter`, `country`, `url` |
+| **App name, map bounds, URLs, etc.** | [`src/lib/settings.js`](src/lib/settings.js) — at least: `projectTitle`, `og_siteName`, `mapBounds`, `initialMapCenter`, `url` |
+| **Address search (geocoding)** | See below (**Geocoding: MapBS vs Nominatim**). |
+
+### Geocoding: MapBS vs Nominatim
+
+**This deployment (Kanton Basel-Stadt)** uses the canton’s [Search / Suchdienst API](https://api.geo.bs.ch/search/v1/) ([documentation](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/api#suchdienst)). That service is **only available for Basel-Stadt**.
+
+**Adapting the app to another city** where MapBS does not apply: in [`src/lib/settings.js`](src/lib/settings.js) set `geocodeProvider` to `"nominatim"`, tune `mapBounds` and `nominatimCountryCodes` for your area, and follow [Nominatim’s usage policy](https://operations.osmfoundation.org/policies/nominatim/) (heavy use may require your own instance or a proxy).
+
+| Provider | Setting | Implementation |
+|----------|---------|----------------|
+| MapBS (default here) | `geocodeProvider: "mapbs"` | [`src/lib/geo/mapBsGeocode.js`](src/lib/geo/mapBsGeocode.js) |
+| Nominatim | `geocodeProvider: "nominatim"` | [`src/lib/geo/nominatimGeocode.js`](src/lib/geo/nominatimGeocode.js) |
+
+The UI calls [`src/lib/geo/geocodeSearch.js`](src/lib/geo/geocodeSearch.js) (`searchAddresses`), which dispatches by `geocodeProvider`. Entry points: [`src/components/search/requestAddress.js`](src/components/search/requestAddress.js), [`src/components/map/Gecoder.svelte`](src/components/map/Gecoder.svelte).
 | **Categories and colors** | [`src/lib/colors.json`](src/lib/colors.json) — `categories`, `palettes`, and `landuseMapping` (see Land-use data below) |
 | **Area modes** | [`src/lib/cityConfig.js`](src/lib/cityConfig.js) (see below) |
 | **Texts and labels** | [`src/locales/`](src/locales/) — add keys under `inputs` for new area modes |

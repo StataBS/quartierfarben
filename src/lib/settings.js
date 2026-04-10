@@ -7,8 +7,6 @@ export const projectTitle = "Quartierfarben";
 
 export const og_siteName = "Statistisches Amt @ Kanton Basel-Stadt";
 
-export const country = "CH"; //for Nominatim request
-
 export const url = "https://statistik.bs/quartierfarben/"; //for sharing
 
 // App settings and defaults
@@ -51,6 +49,16 @@ export const mapBounds = [
     [7.4, 47.47], // Southwest coordinates
     [7.85, 47.66], // Northeast coordinates
   ];
+
+/**
+ * Address search backend.
+ * - mapbs: api.geo.bs.ch/search/v1 (Kanton Basel-Stadt only; API_KEY_MAPBS in .env via vite.config.js).
+ * - nominatim: nominatim.openstreetmap.org — for forks outside BS; follow OSMF usage policy.
+ */
+export const geocodeProvider = "mapbs"; // "mapbs" | "nominatim"
+
+/** ISO 3166-1 alpha-2 codes for Nominatim countrycodes (comma-separated), e.g. "CH". */
+export const nominatimCountryCodes = "CH";
 
 export const initialMapCenter = [7.58979, 47.56022]; // Basel
 

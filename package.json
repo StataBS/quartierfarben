@@ -31,6 +31,7 @@
 	"type": "module",
 	"dependencies": {
 		"@fontsource/outfit": "^5.2.8",
+		"@swissgeo/coordinates": "^1.0.4",
 		"@turf/area": "^7.3.3",
 		"@turf/bbox-polygon": "^7.3.3",
 		"@turf/boolean-within": "^7.3.3",
@@ -44,6 +45,7 @@
 		"d3-hierarchy": "^3.1.2",
 		"daisyui": "^2.52.0",
 		"maplibre-gl": "^5.17.0",
+		"proj4": "^2.20.8",
 		"svelte-select": "^5.8.3",
 		"textures": "^1.2.3"
 	}

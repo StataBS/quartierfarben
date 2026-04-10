@@ -1,6 +1,7 @@
 <script>
   import { newBounds, lang } from "$lib/stores.js";
-  import { mapBounds } from "$lib/settings.js";
+
+  import { searchAddresses } from "$lib/geo/geocodeSearch.js";
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
@@ -28,40 +29,20 @@
     }
 
     if (event.keyCode === 13 || event.target.getAttribute("id") === "submit") {
-      let geocoderQuery =
-        "https://nominatim.openstreetmap.org/search.php?viewbox=" +
-        mapBounds[(0, 0)] +
-        "," +
-        mapBounds[(0, 1)] +
-        "," +
-        mapBounds[(1, 0)] +
-        "," +
-        mapBounds[(1, 1)] +
-        "&bounded=1&q=${searchText}&format=json&limit=5";
+      const results = await searchAddresses(searchText, { limit: 5 });
 
-      // get the data
-      let fetchResults = await fetch(geocoderQuery)
-        .then((r) => r.json())
-        .catch((error) => {
-          return;
-        });
+      searchResults = results.map((r) => ({
+        value: [r.lon, r.lat],
+        label: r.display_name,
+      }));
 
-      let results = [];
-
-      fetchResults.forEach((result, i) => {
-        results.push({
-          value: [Number(result.lon), Number(result.lat)],
-          label: result.display_name,
-        });
-      });
-
-      searchResults = results;
       searchText = "";
       selectedIndex = 0;
       return;
     }
 
     if (event.keyCode === 38 || event.keyCode === 40) {
+      if (!searchResults?.length) return;
       const searchResultsLength = searchResults.length;
       if (event.keyCode === 38) {
         selectedIndex =
