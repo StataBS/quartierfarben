@@ -1,1 +1,27 @@
 /* Fonts and Tailwind come from app.postcss (@kanton-basel-stadt/designsystem). */
+
+/* Shared form-control shell style for native input and svelte-select wrapper. */
+.input,
+.address-search-dds .dds-address-select.svelte-select {
+  width: 100%;
+  height: 46px;
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 1px solid #1e4557;
+  border-radius: 4px;
+  background: #fff;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.input:hover,
+.address-search-dds .dds-address-select.svelte-select:hover {
+  border-color: #0e81a7;
+}
+
+.input:focus,
+.input:focus-visible,
+.address-search-dds .dds-address-select.svelte-select.focused {
+  border-color: #9156b4;
+  box-shadow: 0 0 10px 0 #9156b4;
+  outline: none;
+}

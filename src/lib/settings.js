@@ -43,6 +43,7 @@ export const sidebarWidthLgPx = 432;
 export const useLocationAsText = true; // Show lat/lng as text on the card
 
 export const defaultTextOnCard = ""; // leave empty to show placeholder text
+export const postcardTextPlaceholder = "Text auf Vorderseite Ihrer Postkarte";
 
 export const defaultLanguage = "de";
 

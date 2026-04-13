@@ -13,6 +13,7 @@
   import getCircleGeom from "$assets/scripts/getCircleGeom";
   import checkCirleFits from "$assets/scripts/checkCirleFits";
   import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
+  import baselBorders from "$lib/borders.js";
   import { circleLocationNeighbourhood } from "$lib/cityConfig.js";
   import {
     landuses,
@@ -42,8 +43,6 @@
     mapCenter,
     basemapId,
     locationText,
-    useLocationAsText,
-    textVis,
     newBounds,
     isMobile,
     lang
@@ -63,10 +62,50 @@
 
   let map;
   let mapShell;
+  const baselBoundary = baselBorders();
   /** Hide map until camera/hash sync is ready (avoids flash before layout is stable). */
   let showMapCanvas = false;
 
   const basemapLayerIdsList = Object.values(BASEMAP_LAYER_IDS);
+
+  function isPointInFeatureCollection(pointFeature, featureCollection) {
+    if (!featureCollection?.features?.length) return false;
+    return featureCollection.features.some((feature) =>
+      booleanPointInPolygon(pointFeature, feature)
+    );
+  }
+
+  function getFeatureCoordinates(feature) {
+    const geometry = feature?.geometry;
+    if (!geometry) return [];
+
+    const rings =
+      geometry.type === "Polygon"
+        ? geometry.coordinates
+        : geometry.type === "MultiPolygon"
+          ? geometry.coordinates.flat()
+          : [];
+    return rings.flat();
+  }
+
+  function getNearestFeatureByDistance(pointCoords, features) {
+    let nearest = null;
+    let minDistanceSq = Number.POSITIVE_INFINITY;
+
+    for (const feature of features) {
+      const featureCoords = getFeatureCoordinates(feature);
+      for (const [lng, lat] of featureCoords) {
+        const dx = pointCoords[0] - lng;
+        const dy = pointCoords[1] - lat;
+        const distanceSq = dx * dx + dy * dy;
+        if (distanceSq < minDistanceSq) {
+          minDistanceSq = distanceSq;
+          nearest = feature;
+        }
+      }
+    }
+    return nearest;
+  }
 
   /** @param {string} id */
   function basemapStoreIdToLayerId(id) {
@@ -99,7 +138,7 @@
 
   $: applyBasemapVisibility($basemapId);
 
-  $: drawAndCount(map, $useLocationAsText);
+  $: drawAndCount(map);
 
   $: setBounds($newBounds);
 
@@ -146,15 +185,15 @@
           break;
         }
       }
+
+      if (!foundFeature && isPointInFeatureCollection(centerPoint, baselBoundary)) {
+        foundFeature = getNearestFeatureByDistance(mC, labelCfg.data.features);
+      }
     }
     if (foundFeature) {
       $locationText = foundFeature.properties[labelCfg.nameProperty];
     } else {
       $locationText = "";
-    }
-
-    if ($useLocationAsText) {
-      $textVis = $locationText;
     }
 
     const { sizes, sumSizes } = getLanduseSizes(map, polygonGeom, landuses);

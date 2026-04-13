@@ -4,6 +4,7 @@
 
   import PostcardFront from "$components/postcard/PostcardFront.svelte";
   import PostcardBack from "$components/postcard/PostcardBack.svelte";
+  import PostcardTextInput from "$components/postcard/PostcardTextInput.svelte";
   import Search from "$components/search/Search.svelte";
   import PrintAndDownload from "$components/PrintAndDownload.svelte";
   import SiteFooter from "$components/SiteFooter.svelte";
@@ -203,6 +204,10 @@
         <div class="w-full shrink-0"><Search /></div>
       </div>
 
+      <div class="hidden w-full min-w-0 lg:block">
+        <PostcardTextInput />
+      </div>
+
       <div class="hidden w-full min-w-0 flex-col gap-y-20 lg:gap-y-24 lg:flex">
         <PrintAndDownload />
         <SiteFooter />
@@ -228,8 +233,13 @@
       <PostcardFront />
     </div>
   {/if}
+  {#if $isMobile}
+    <div class="max-lg:order-5 bg-white px-[1.5rem] py-2 sm:px-[2rem]">
+      <PostcardTextInput />
+    </div>
+  {/if}
   <div
-    class="z-10 flex w-full max-lg:order-5 flex-col gap-y-20 overflow-auto bg-white px-[1.5rem] py-3 sm:px-[2rem] sm:py-4 lg:hidden"
+    class="z-10 flex w-full max-lg:order-6 flex-col gap-y-20 overflow-auto bg-white px-[1.5rem] py-3 sm:px-[2rem] sm:py-4 lg:hidden"
   >
     <PrintAndDownload />
     <SiteFooter />

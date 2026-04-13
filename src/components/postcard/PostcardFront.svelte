@@ -9,12 +9,12 @@ https://observablehq.com/@d3/treemap
   import { select } from "d3-selection";
   import { transition } from "d3-transition";
   import { geoMercator, geoPath, geoCircle } from "d3-geo";
-  import chroma from "chroma-js";
   import {
     areaSizes,
     dimensions,
     svg,
     textVis,
+    locationText,
     lang,
     isMobile,
     screenWidth,
@@ -24,11 +24,9 @@ https://observablehq.com/@d3/treemap
   } from "$lib/stores.js";
   import {
     categories,
-    labelContrast,
-    postcardMargin
+    postcardMargin,
+    postcardTextPlaceholder
   } from "$lib/settings.js";
-
-  import { onMount, tick } from "svelte";
 
   import geojson from "$lib/borders.js";
 
@@ -54,56 +52,8 @@ https://observablehq.com/@d3/treemap
     }
   }
 
-  let titleInput;   // bind to the <input/>
-  let wrapper;      // bind to the container div
-
   /** Horizontal inset for scale math — matches mx-[1.5rem] / sm:mx-[2rem] (DDS maps px-8 to 8px!) */
   $: mobileHorizontalInsetPx = $screenWidth >= 640 ? 64 : 48;
-
-  function placeInputAtTitle() {
-    if (!$svg || !titleInput || !wrapper) return;
-
-    /* Must match .title-text y */
-    const topPct = ((height * TITLE_Y - postcardMargin) / height) * 100;
-    
-    // Get the actual wrapper dimensions to account for scaling
-    const wrapperRect = wrapper.getBoundingClientRect();
-    const wrapperWidth = wrapperRect.width;
-    const postcardWidthPx = width - 2 * postcardMargin;
-    
-    // Calculate width as percentage of wrapper, but based on postcard dimensions
-    // This ensures the input width matches the postcard width regardless of scaling
-    const widthPct = (postcardWidthPx / wrapperWidth) * 100;
-
-    Object.assign(titleInput.style, {
-      position: "absolute",
-      left: "50%",
-      top: `${topPct}%`,
-      width: `${widthPct}%`,
-      transform: "translate(-50%, -50%)",
-      transformOrigin: "top left",
-      fontSize: "30px",         // let the wrapper's scale handle visual size
-      textAlign: "center",
-      zIndex: 10
-    });
-  }
-
-  // run after draw, and on resize
-  onMount(() => {
-    const ro = new ResizeObserver(() => {
-      tick().then(placeInputAtTitle);
-    });
-    ro.observe(wrapper);
-    window.addEventListener("resize", placeInputAtTitle);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", placeInputAtTitle);
-    };
-  });
-
-  $: if ($svg && titleInput && wrapper) {
-    tick().then(placeInputAtTitle);
-  }
 
   let treemap;
   function sumByCount(d) {
@@ -147,7 +97,7 @@ https://observablehq.com/@d3/treemap
   }
 
   $: dataUpdated($areaSizes);
-  $: updateText($textVis);
+  $: updateText($textVis, $locationText);
   $: if ($svg) {
     $svg.selectAll(".coordinates-text").remove();
     if ($showCoordinates && $mapCenter) {
@@ -164,14 +114,20 @@ https://observablehq.com/@d3/treemap
     }
   }
 
-  function updateText(newText) {
+  function resolveTitleText(customText, autoText) {
+    if (customText && customText.trim()) return customText;
+    if (autoText && autoText.trim()) return autoText;
+    return "";
+  }
+
+  function updateText(customText, autoText) {
     if (!$svg) {
       return;
     }
 
     $svg
       .selectAll(".title-text")
-      .data([newText])
+      .data([resolveTitleText(customText, autoText)])
       .text(function (d) {
         return d;
       });
@@ -236,7 +192,7 @@ https://observablehq.com/@d3/treemap
 
     $svg
       .selectAll(".title-text")
-      .data([$textVis])
+      .data([resolveTitleText($textVis, $locationText)])
       .enter()
       .append("text")
       .attr("class", "title-text")
@@ -248,9 +204,7 @@ https://observablehq.com/@d3/treemap
       .attr("fill", "#292929")
       .text(function (d) {
         return d;
-      })
-      /* HTML input shows the title; keep SVG text for export/print only */
-      .attr("opacity", 0);
+      });
 
     if ($showCoordinates && $mapCenter) {
       const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
@@ -305,14 +259,7 @@ https://observablehq.com/@d3/treemap
         return Math.round(d.data.size).toString() + "%";
       })
       .attr("fill", function (d) {
-        if (d.data.color) {
-          let c = chroma(d.data.color);
-          if (c.luminance() < 0.2) {
-            return c.brighten(labelContrast).hex();
-          } else {
-            return c.darken(labelContrast).hex();
-          }
-        }
+        return "#000000";
       })
       .style("cursor", "default")
       .style("opacity", 0)
@@ -369,7 +316,6 @@ https://observablehq.com/@d3/treemap
         `translate(${width - postcardMargin - mapWidth - 10},
                    ${height - postcardMargin - mapHeight - 10})`
       );
-      placeInputAtTitle();
   }
 
   function updateData(newData) {
@@ -431,36 +377,6 @@ https://observablehq.com/@d3/treemap
 </script>
 
 <style>
-  /* Overlay: calm Inter bold until focus; DDS-like field on focus (see form-elements/input) */
-  .postcard-title-input {
-    box-sizing: border-box;
-    width: 100%;
-    padding: 0.375rem 0.625rem;
-    text-align: center;
-    font-family: Inter, "Inter Fallback", system-ui, sans-serif;
-    font-weight: 700;
-    font-synthesis: none;
-    color: #292929;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
-    -webkit-font-smoothing: antialiased;
-    transition:
-      border-color 0.25s ease-in-out,
-      box-shadow 0.25s ease-in-out,
-      background-color 0.25s ease-in-out;
-  }
-
-  .postcard-title-input::placeholder {
-    @apply text-gray-500;
-  }
-
-  .postcard-title-input:focus {
-    outline: none;
-    @apply border border-purple-600 bg-white;
-    box-shadow: 0 0 0 1px theme("colors.purple.600");
-  }
-
   :global(svg.postcard) {
     width: 444px;
     height: 630px;
@@ -479,7 +395,6 @@ https://observablehq.com/@d3/treemap
 </style>
 
 <div
-  bind:this={wrapper}
   class={$isMobile ? "relative mx-[1.5rem] pt-[2rem] text-center sm:mx-[2rem]"
                    : "postcard-desktop border drop-shadow-xl"}
   style={$screenWidth <= 500
@@ -489,11 +404,4 @@ https://observablehq.com/@d3/treemap
     : ""}
 >
   <main class="w-full text-center" bind:this={visWrapper} />
-  <input
-    bind:this={titleInput}
-    type="text"
-    bind:value={$textVis}
-    placeholder={appText.postcard.front.title}
-    class="postcard-title-input"
-  />
 </div>
