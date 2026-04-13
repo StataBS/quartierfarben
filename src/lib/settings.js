@@ -25,6 +25,8 @@ export const footerLinks = {
   kiezcolors: "https://kiezcolors.odis-berlin.de/",
   graetzlfarben: "https://cartolab.at/graetzlfarben/",
   githubRepo: "https://github.com/statabs/quartierfarben",
+  /** Statistisches Amt Basel-Stadt on GitHub (organization). */
+  socialGithub: "https://github.com/statabs",
   socialInstagram: "https://www.instagram.com/statistikbs/",
   socialLinkedin: "https://www.linkedin.com/company/statistik-bs",
   socialYoutube: "https://www.youtube.com/@statistikbaselstadt",
@@ -43,7 +45,6 @@ export const sidebarWidthLgPx = 432;
 export const useLocationAsText = true; // Show lat/lng as text on the card
 
 export const defaultTextOnCard = ""; // leave empty to show placeholder text
-export const postcardTextPlaceholder = "Text auf Vorderseite Ihrer Postkarte";
 
 export const defaultLanguage = "de";
 

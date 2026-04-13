@@ -103,7 +103,7 @@
   <button
     bind:this={triggerEl}
     type="button"
-    class="basemap-trigger group/basemap button is-sm max-w-none shrink-0 whitespace-nowrap"
+    class="basemap-trigger group/basemap button max-w-none shrink-0 whitespace-nowrap"
     data-open={open ? "true" : undefined}
     aria-expanded={open}
     aria-haspopup="listbox"
@@ -112,8 +112,8 @@
   >
     <svg
       class="basemap-layers-icon origin-center shrink-0 group-hover/basemap:animate-[ds-icon-pop_0.45s_ease]"
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -130,8 +130,8 @@
     <svg
       class="lang-chevron shrink-0 transition-transform duration-150"
       class:lang-chevron--open={open}
-      width="16"
-      height="16"
+      width="18"
+      height="18"
       viewBox="0 0 20 20"
       fill="currentColor"
       aria-hidden="true"
@@ -157,7 +157,7 @@
         <li role="option" aria-selected={$basemapId === id}>
           <button
             type="button"
-            class="basemap-menu__option w-full rounded-md px-5 py-5 text-left text-base transition-colors duration-150 hover:bg-purple-50 hover:!text-purple-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 {$basemapId === id
+            class="basemap-menu__option w-full rounded-md px-5 py-5 text-left text-base transition-colors duration-150 hover:bg-purple-50 hover:!text-purple-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 lg:text-[18px] {$basemapId === id
               ? 'font-bold text-blue-900'
               : 'font-normal text-gray-600'}"
             on:click={() => pick(id)}
@@ -171,28 +171,39 @@
 </div>
 
 <style>
+  /* Match `.input` shell (styles.css): 46px height, same type scale as sidebar (16 / 18). */
   .basemap-trigger {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     max-width: min(100%, 20rem);
+    min-height: 46px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    line-height: 1.35;
   }
 
-  :global(button.basemap-trigger.button.is-sm[data-open="true"]) {
+  @media (min-width: 1024px) {
+    .basemap-trigger {
+      font-size: 1.125rem;
+    }
+  }
+
+  :global(button.basemap-trigger.button[data-open="true"]) {
     --button-bg: theme("colors.purple.100");
     --button-border: theme("colors.purple.600");
     --button-text: theme("colors.purple.900");
   }
 
-  :global(button.basemap-trigger.button.is-sm[data-open="true"]:hover),
-  :global(button.basemap-trigger.button.is-sm[data-open="true"]:focus-visible) {
+  :global(button.basemap-trigger.button[data-open="true"]:hover),
+  :global(button.basemap-trigger.button[data-open="true"]:focus-visible) {
     --button-text: theme("colors.purple.900");
   }
 
-  :global(button.basemap-trigger.button.is-sm) .lang-chevron {
+  :global(button.basemap-trigger.button) .lang-chevron {
     display: block;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
     color: inherit;
@@ -203,7 +214,7 @@
     transform: rotate(180deg);
   }
 
-  :global(button.basemap-trigger.button.is-sm) .basemap-layers-icon {
+  :global(button.basemap-trigger.button) .basemap-layers-icon {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
   }

@@ -22,4 +22,4 @@ export let screenHeight = writable();
 export let isMobile = writable(true);
 export let screenWidth = writable(0);
 export let textVis = writable(settings.defaultTextOnCard);
-export let showCoordinates = writable(true); // Toggle to show/hide coordinates on postcard
+export let showCoordinates = writable(false); // Toggle to show/hide coordinates on postcard

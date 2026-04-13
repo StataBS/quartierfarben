@@ -22,11 +22,7 @@ https://observablehq.com/@d3/treemap
     circleRadius,
     showCoordinates,
   } from "$lib/stores.js";
-  import {
-    categories,
-    postcardMargin,
-    postcardTextPlaceholder
-  } from "$lib/settings.js";
+  import { categories, postcardMargin } from "$lib/settings.js";
 
   import geojson from "$lib/borders.js";
 
@@ -36,6 +32,23 @@ https://observablehq.com/@d3/treemap
 
   /** Title line (viewBox y); higher = more room for coords + mini-map below */
   const TITLE_Y = 0.855;
+
+  /** WGS84 degrees on postcard (5 digits after decimal point). */
+  function formatCoordForLabel(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toFixed(5) : String(value ?? "");
+  }
+
+  function coordinatesLineText(center) {
+    if (!center?.length) return "";
+    return (
+      "Lat " +
+      formatCoordForLabel(center[1]) +
+      " N, Lng " +
+      formatCoordForLabel(center[0]) +
+      " E"
+    );
+  }
 
   let projection;
   let borders = geojson();
@@ -101,7 +114,7 @@ https://observablehq.com/@d3/treemap
   $: if ($svg) {
     $svg.selectAll(".coordinates-text").remove();
     if ($showCoordinates && $mapCenter) {
-      const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      const coordText = coordinatesLineText($mapCenter);
       $svg
         .append("text")
         .attr("class", "coordinates-text")
@@ -135,7 +148,7 @@ https://observablehq.com/@d3/treemap
     // Update coordinates text
     $svg.selectAll(".coordinates-text").remove();
     if ($showCoordinates && $mapCenter) {
-      const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      const coordText = coordinatesLineText($mapCenter);
       $svg
         .append("text")
         .attr("class", "coordinates-text")
@@ -207,7 +220,7 @@ https://observablehq.com/@d3/treemap
       });
 
     if ($showCoordinates && $mapCenter) {
-      const coordText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
+      const coordText = coordinatesLineText($mapCenter);
       $svg
         .append("text")
         .attr("class", "coordinates-text")
@@ -299,7 +312,11 @@ https://observablehq.com/@d3/treemap
 
 
       const radiusInDegrees = $circleRadius / 111320; // 1 degree ≈ 111,320 meters
-      const circle = geoCircle().center($mapCenter).radius(radiusInDegrees);
+      const centerNums = [
+        Number($mapCenter[0]),
+        Number($mapCenter[1]),
+      ];
+      const circle = geoCircle().center(centerNums).radius(radiusInDegrees);
       map
         .append("path")
         .datum(circle())

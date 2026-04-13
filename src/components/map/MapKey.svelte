@@ -17,14 +17,14 @@
   class:my-[1rem]={$isMobile}
   class:mx-0={$isMobile}
 >
-  {#each Object.values(categories) as { color, name, name_en }, i}
+  {#each Object.values(categories) as { color, name, name_en } (name)}
     <div class="map-legend-item inline-block align-middle">
       <div
         class="map-legend-swatch rounded-full ml-2 inline-block"
-        style="width:16px;height:16px;min-width:16px;min-height:16px;background-color:{color};border:1.5px solid white;"
-      />
+        style="background-color:{color};border:1.5px solid white;"
+      ></div>
       <p
-        class="map-legend-text align-middle leading-4 ml-1 inline-block mb-2"
+        class="map-legend-text align-middle ml-1 inline-block mb-2 leading-snug"
         style="text-shadow: 2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff,
       1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff;"
       >
@@ -35,6 +35,21 @@
 </div>
 
 <style>
+  /* Legend type: 16px mobile / 18px desktop — same rhythm as sidebar intro (+page). */
+  .map-legend-swatch {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+  }
+
+  .map-legend--desktop .map-legend-swatch {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+  }
+
   /* Below postcard (z-40) and zoom (z-40); above map (z-0) */
   .map-legend--desktop {
     left: calc(var(--sidebar-overlay-w, 0px) + 8px);
@@ -43,13 +58,13 @@
 
   .map-legend-text {
     color: #333333;
-    font-size: 0.875rem;
-    line-height: 1rem;
+    font-size: 1rem;
+    line-height: 1.35;
   }
 
   .map-legend--desktop .map-legend-text {
-    font-size: 0.9375rem;
-    line-height: 1.125rem;
+    font-size: 1.125rem;
+    line-height: 1.35;
   }
 
   .map-legend-item {

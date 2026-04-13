@@ -18,59 +18,23 @@
 
   $: year = new Date().getFullYear();
 
-  /** @type {'impressum' | 'barriere' | null} */
-  let openPanel = null;
-
-  function toggleImpressum() {
-    openPanel = openPanel === "impressum" ? null : "impressum";
-  }
-
-  function toggleBarriere() {
-    openPanel = openPanel === "barriere" ? null : "barriere";
-  }
-
-  /** Same classes the external meta links had before (weight comes from `<ul class="… font-medium">`). */
-  const metaLinkClass =
-    "link text-sm underline decoration-white underline-offset-4 hover:decoration-blue-700";
-
-  const metaToggleBase =
-    "link text-sm underline underline-offset-4 hover:decoration-blue-700 cursor-pointer border-0 bg-transparent p-0 text-left text-inherit";
 </script>
 
 <!-- Full-bleed within padded sidebar / mobile column; inner content keeps horizontal padding -->
+<!-- Mobile column uses gap-y-[2.5rem] (+page) — DDS maps plain gap-20 to ~20px, which felt tight. -->
 <div
   class="-mx-[1.5rem] box-border w-[calc(100%+3rem)] max-w-none shrink-0 sm:-mx-[2rem] sm:w-[calc(100%+4rem)]"
 >
   <hr class="h-[4px] w-full border-none bg-green-600" />
 
-  <footer class="box-border w-full bg-gray-200 py-28 print:hidden lg:py-40">
+  <footer
+    class="box-border w-full bg-gray-200 py-28 print:hidden max-lg:pt-[2rem] lg:py-40"
+  >
   <h2 class="sr-only">{appText.siteFooter.srTitle}</h2>
   <div
     class="mx-auto flex w-full max-w-full flex-col gap-y-20 px-[1.5rem] sm:px-[2rem] lg:gap-y-24"
   >
     <nav aria-label={appText.siteFooter.ariaQuick} class="flex w-full flex-col gap-y-20">
-      <a
-        href={feedbackMailHref}
-        class="button group/feedback w-full max-w-none"
-      >
-        <svg
-          class="h-5 w-5 shrink-0 origin-center group-hover/feedback:animate-[ds-icon-pop_0.45s_ease]"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.75"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-        {appText.siteFooter.feedback}
-      </a>
-
       <ul class="flex flex-wrap gap-5 font-medium">
         <li>
           <a
@@ -84,55 +48,25 @@
         </li>
         <li>
           <a
-            class="button is-sm is-link"
-            href={footerLinks.geoinformation}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {appText.siteFooter.geoinformation}
-          </a>
-        </li>
-        <li>
-          <a
-            class="button is-sm is-link"
-            href={footerLinks.kiezcolors}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {appText.siteFooter.kiezcolors}
-          </a>
-        </li>
-        <li>
-          <a
-            class="button is-sm is-link"
-            href={footerLinks.graetzlfarben}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {appText.siteFooter.graetzlfarben}
-          </a>
-        </li>
-        <li>
-          <a
-            class="group/github button is-sm inline-flex items-center gap-2"
-            href={footerLinks.githubRepo}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={feedbackMailHref}
+            class="group/feedback button is-sm inline-flex items-center gap-2"
           >
             <svg
-              class="h-4 w-4 shrink-0 origin-center group-hover/github:animate-[ds-icon-pop_0.45s_ease]"
-              viewBox="0 0 98 96"
+              class="h-4 w-4 shrink-0 origin-center group-hover/feedback:animate-[ds-icon-pop_0.45s_ease]"
               xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.75"
+              stroke="currentColor"
               aria-hidden="true"
             >
               <path
-                fill="currentColor"
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.653c4.125 0 8.33.571 12.213 1.653 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.142-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.934 33.405-46.691C97.707 22 75.788 0 48.854 0z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
               />
             </svg>
-            {appText.siteFooter.github}
+            {appText.siteFooter.feedback}
           </a>
         </li>
       </ul>
@@ -212,100 +146,51 @@
             </span>
           </a>
         </li>
+        <li>
+          <a
+            class="group/github button is-sm is-icon-only"
+            href={footerLinks.socialGithub}
+            aria-label={appText.siteFooter.github}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg
+              class="h-5 w-5 shrink-0 origin-center group-hover/github:animate-[ds-icon-pop_0.45s_ease]"
+              viewBox="0 0 98 96"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.653c4.125 0 8.33.571 12.213 1.653 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.142-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.934 33.405-46.691C97.707 22 75.788 0 48.854 0z"
+              />
+            </svg>
+            <span class="sr-only">
+              {appText.siteFooter.github}
+              <span class="sr-only">{appText.siteFooter.externalNewTab}</span>
+            </span>
+          </a>
+        </li>
       </ul>
     </nav>
 
     <div class="flex flex-col gap-6">
-      <nav aria-label={appText.siteFooter.ariaMeta}>
-        <ul class="flex flex-wrap gap-x-8 gap-y-3 font-medium">
-          <li>
-            <a
-              class={metaLinkClass}
-              href={footerLinks.startseite}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {appText.siteFooter.startseite}
-            </a>
-          </li>
-          <li>
-            <a
-              class={metaLinkClass}
-              href={footerLinks.datenschutz}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {appText.siteFooter.datenschutz}
-            </a>
-          </li>
-          <li>
-            <a
-              class={metaLinkClass}
-              href={footerLinks.ombudsstelle}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {appText.siteFooter.ombudsstelle}
-            </a>
-          </li>
-          <li>
-            <button
-              type="button"
-              class="{metaToggleBase} {openPanel === 'impressum'
-                ? 'decoration-blue-700'
-                : 'decoration-white'}"
-              aria-expanded={openPanel === "impressum"}
-              aria-controls="footer-legal-panel"
-              on:click={toggleImpressum}
-            >
-              {appText.siteFooter.impressumHeading}
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              class="{metaToggleBase} {openPanel === 'barriere'
-                ? 'decoration-blue-700'
-                : 'decoration-white'}"
-              aria-expanded={openPanel === "barriere"}
-              aria-controls="footer-legal-panel"
-              on:click={toggleBarriere}
-            >
-              {appText.siteFooter.barrierefreiheitHeading}
-            </button>
-          </li>
-        </ul>
-      </nav>
-
-      {#if openPanel}
-        <div
-          id="footer-legal-panel"
-          role="region"
-          aria-label={openPanel === "impressum"
-            ? appText.siteFooter.impressumHeading
-            : appText.siteFooter.barrierefreiheitHeading}
-        >
-          {#if openPanel === "impressum"}
-            <div class="text-sm text-gray-800">
-              <p class="m-0 font-bold text-blue-900">
-                {appText.siteFooter.impressumHeading}
-              </p>
-              <div class="mt-2 [&_a]:underline">
-                {@html appText.footer.impressumHtml}
-              </div>
-            </div>
-          {:else}
-            <div class="text-sm text-gray-800">
-              <p class="m-0 font-bold text-blue-900">
-                {appText.siteFooter.barrierefreiheitHeading}
-              </p>
-              <p class="m-0 mt-2">
-                {appText.footer.accessibilityStatement}
-              </p>
-            </div>
-          {/if}
+      <div
+        id="footer-legal-panel"
+        role="region"
+        aria-label={appText.siteFooter.impressumHeading}
+      >
+        <div class="text-sm text-gray-800">
+          <p class="m-0 font-bold text-blue-900">
+            {appText.siteFooter.impressumHeading}
+          </p>
+          <div class="mt-2 [&_a]:underline">
+            {@html appText.footer.impressumHtml}
+          </div>
         </div>
-      {/if}
+      </div>
     </div>
 
     <div class="text-sm font-bold text-blue-900">

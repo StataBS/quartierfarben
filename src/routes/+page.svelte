@@ -7,6 +7,7 @@
   import PostcardTextInput from "$components/postcard/PostcardTextInput.svelte";
   import Search from "$components/search/Search.svelte";
   import PrintAndDownload from "$components/PrintAndDownload.svelte";
+  import ShowCoordinatesToggle from "$components/ShowCoordinatesToggle.svelte";
   import SiteFooter from "$components/SiteFooter.svelte";
   import SidebarBrandHeader from "$components/SidebarBrandHeader.svelte";
 
@@ -174,7 +175,7 @@
   <!-- Kanton DDS maps numeric spacing to px (e.g. gap-8 → 8px). Use […rem] for layout rhythm. -->
   <div
     use:attachSidebarScroll
-    class="sidebar-panel box-border z-10 flex w-full min-w-0 shrink-0 flex-col gap-8 bg-white px-0 pt-0 pb-3 sm:gap-10 sm:pb-4 max-lg:order-1 max-lg:overflow-x-visible max-lg:overflow-y-visible lg:order-none lg:fixed lg:left-0 lg:top-0 lg:z-[30] lg:h-screen lg:w-[var(--sidebar-lg-w)] lg:min-w-[var(--sidebar-lg-w)] lg:max-w-[var(--sidebar-lg-w)] lg:gap-12 lg:overflow-x-hidden lg:overflow-y-auto lg:pb-5"
+    class="sidebar-panel box-border z-10 flex w-full min-w-0 shrink-0 flex-col gap-8 bg-white px-0 pt-0 pb-3 sm:gap-10 sm:pb-4 max-lg:order-1 max-lg:overflow-x-visible max-lg:overflow-y-visible max-lg:pb-[3.5rem] lg:order-none lg:fixed lg:left-0 lg:top-0 lg:z-[30] lg:h-screen lg:w-[var(--sidebar-lg-w)] lg:min-w-[var(--sidebar-lg-w)] lg:max-w-[var(--sidebar-lg-w)] lg:gap-[1rem] lg:overflow-x-hidden lg:overflow-y-auto lg:pb-5"
     style="--sidebar-lg-w: {sidebarWidthLgPx}px;"
     class:shadow-lg={!$isMobile}
   >
@@ -184,32 +185,45 @@
     />
 
     <div
-      class="sidebar-panel-body flex min-w-0 flex-col gap-[1.5rem] px-[1.5rem] pb-0 pt-6 sm:px-[2rem] sm:pt-8 lg:pt-10"
+      class="sidebar-panel-body flex min-w-0 flex-col px-[1.5rem] pb-0 pt-6 sm:px-[2rem] sm:pt-8 lg:pt-[28px] max-lg:gap-[1.5rem]"
     >
+      <!-- Group: title + intro + search (lg: asymmetric — more space before search) -->
       <div
-        class="sidebar-panel-title flex min-w-0 flex-row flex-wrap items-start justify-between gap-[0.75rem] pt-2 sm:pt-3"
+        class="flex w-full min-w-0 flex-col max-lg:gap-[1.5rem]"
       >
         <div
-          class="min-w-0 max-w-full flex-1 break-words text-4xl font-bold leading-tight text-[rgb(50,131,74)] md:text-4xl xl:text-5xl lg:break-normal lg:whitespace-nowrap"
+          class="sidebar-panel-title flex min-w-0 flex-row flex-wrap items-start justify-between gap-[0.75rem] pt-2 sm:pt-3 lg:pt-0"
         >
-          {projectTitle}
+          <div
+            class="min-w-0 max-w-full flex-1 break-words text-4xl font-bold leading-tight text-[rgb(50,131,74)] md:text-4xl xl:text-5xl lg:break-normal lg:whitespace-nowrap"
+          >
+            {projectTitle}
+          </div>
+        </div>
+
+        <p class="m-0 lg:mt-[30px] lg:text-[18px] max-lg:mt-0">
+          {@html appText.description}
+        </p>
+
+        <div
+          class="flex w-full shrink-0 flex-col gap-0 lg:mt-[52px] max-lg:mt-[1.5rem]"
+        >
+          <div class="w-full shrink-0"><Search /></div>
         </div>
       </div>
 
-      <p class="m-0 lg:text-[18px]">
-        {@html appText.description}
-      </p>
-
-      <div class="flex w-full shrink-0 flex-col gap-0">
-        <div class="w-full shrink-0"><Search /></div>
-      </div>
-
-      <div class="hidden w-full min-w-0 lg:block">
-        <PostcardTextInput />
-      </div>
-
-      <div class="hidden w-full min-w-0 flex-col gap-y-20 lg:gap-y-24 lg:flex">
+      <!-- Desktop: postcard text + coordinates, then download buttons -->
+      <div
+        class="hidden w-full min-w-0 lg:mt-[4rem] lg:flex lg:flex-col lg:gap-[3.5rem]"
+      >
+        <div class="flex w-full min-w-0 flex-col lg:gap-[1.5rem]">
+          <PostcardTextInput />
+          <ShowCoordinatesToggle />
+        </div>
         <PrintAndDownload />
+      </div>
+
+      <div class="hidden w-full min-w-0 lg:mt-[96px] lg:block">
         <SiteFooter />
       </div>
     </div>
@@ -229,17 +243,20 @@
     </div>
   {/if}
   {#if $isMobile}
-    <div class="max-lg:order-4">
+    <div class="max-lg:order-4 max-lg:mb-[3.5rem]">
       <PostcardFront />
     </div>
   {/if}
   {#if $isMobile}
-    <div class="max-lg:order-5 bg-white px-[1.5rem] py-2 sm:px-[2rem]">
+    <div
+      class="max-lg:order-5 flex flex-col gap-[1.5rem] bg-white px-[1.5rem] pb-[2.75rem] pt-6 sm:px-[2rem] sm:pt-8"
+    >
       <PostcardTextInput />
+      <ShowCoordinatesToggle />
     </div>
   {/if}
   <div
-    class="z-10 flex w-full max-lg:order-6 flex-col gap-y-20 overflow-auto bg-white px-[1.5rem] py-3 sm:px-[2rem] sm:py-4 lg:hidden"
+    class="z-10 flex w-full max-lg:order-6 flex-col gap-y-[5.5rem] overflow-auto bg-white px-[1.5rem] pt-[2.75rem] pb-8 sm:px-[2rem] sm:pt-10 sm:pb-9 lg:hidden"
   >
     <PrintAndDownload />
     <SiteFooter />

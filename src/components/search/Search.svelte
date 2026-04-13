@@ -23,6 +23,7 @@
   let isInputFocused = false;
   let debounceTimeout;
   let requestId = 0;
+  const inputId = "address-search-combobox";
   const listboxId = "address-search-listbox";
   const searchDebounceMs = 300;
 
@@ -157,9 +158,16 @@
     clearTimeout(debounceTimeout);
   });
 </script>
-<div class="address-search-dds">
+<div class="address-search-dds flex w-full flex-col gap-[0.5rem]">
+  <label
+    class="label !m-0 block text-base leading-snug text-gray-900"
+    for={inputId}
+  >
+    {appText.inputs.searchLabel}
+  </label>
   <div class="dds-address-select">
     <input
+      id={inputId}
       class="input w-full"
       type="text"
       autocomplete="off"
@@ -168,7 +176,7 @@
       aria-controls={listboxId}
       aria-activedescendant={highlightedIndex >= 0 ? getOptionId(highlightedIndex) : undefined}
       aria-autocomplete="list"
-      placeholder={appText.inputs.search}
+      placeholder={appText.inputs.searchPlaceholder}
       value={inputValue}
       on:input={handleInput}
       on:focus={handleFocus}
@@ -193,10 +201,6 @@
       </ul>
     {/if}
   </div>
-  <!--
-    placeholder={appText.inputs.search}
-    no-results text can be reintroduced if needed using appText.inputs.noSearchResults
-  -->
 </div>
 <svelte:window on:mousedown={handleWindowClick} />
 

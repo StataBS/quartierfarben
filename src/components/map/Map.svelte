@@ -152,7 +152,7 @@
     const canvas = document.getElementById("myCanvas");
 
     const mC = getViewportCenterLngLat(map);
-    $mapCenter = [mC[0].toFixed(3), mC[1].toFixed(3)];
+    $mapCenter = [mC[0].toFixed(5), mC[1].toFixed(5)];
 
     const polygonGeom = getCircleGeom(map, {
       radius: $circleRadius,
@@ -406,7 +406,7 @@
     class="pointer-events-auto absolute bottom-[1rem] right-[1rem] z-50 flex max-w-[min(100%-2rem,20rem)] flex-col items-end gap-y-2"
   >
     <span
-      class="shrink-0 text-right text-base font-medium leading-snug text-gray-900"
+      class="shrink-0 text-right text-base font-medium leading-snug text-gray-900 lg:text-[18px]"
       style="text-shadow: 1px 0 #fff, -1px 0 #fff, 0 1px #fff, 0 -1px #fff;"
     >
       {appText.map.radius}: {$circleRadius}m
