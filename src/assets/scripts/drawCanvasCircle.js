@@ -1,12 +1,16 @@
 import destination from "@turf/destination";
+import { getViewportCenterLngLat } from "$lib/geo/viewportAnalysisCenter.js";
 
 export default function (map, canvas, circleRadius) {
-  const cooUp = destination(map.getCenter().toArray(), circleRadius, 90, {
+  const center = getViewportCenterLngLat(map);
+  const cooUp = destination(center, circleRadius, 90, {
     units: "meters",
   }).geometry.coordinates;
   const rightPoints = map.project(cooUp);
-  const centerPoints = map.project(map.getCenter().toArray());
+  const centerPoints = map.project(center);
   const radius = rightPoints.x - centerPoints.x;
+  const cx = centerPoints.x;
+  const cy = centerPoints.y;
 
   const { width, height } = map.getContainer().getBoundingClientRect();
   const ctx = canvas.getContext("2d");
@@ -22,8 +26,8 @@ export default function (map, canvas, circleRadius) {
   ctx.lineTo(0, 0);
   ctx.closePath();
 
-  ctx.moveTo(width / 4, height / 4);
-  ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI, true);
+  ctx.moveTo(cx - width / 4, cy - height / 4);
+  ctx.arc(cx, cy, radius, 0, 2 * Math.PI, true);
   ctx.fillStyle = "rgba(255,255,255,0.4)";
   ctx.strokeStyle = "rgba(255,255,255,0)";
   ctx.lineWidth = 0.1;
@@ -32,18 +36,18 @@ export default function (map, canvas, circleRadius) {
   ctx.closePath();
 
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI, true);
+  ctx.arc(cx, cy, radius, 0, 2 * Math.PI, true);
   ctx.strokeStyle = "rgba(255,255,255,1)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, 4, 0, 2 * Math.PI, true);
+  ctx.arc(cx, cy, 4, 0, 2 * Math.PI, true);
   ctx.fillStyle = "rgba(255,255,255,0.8)";
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, 2, 0, 2 * Math.PI, true);
+  ctx.arc(cx, cy, 2, 0, 2 * Math.PI, true);
   ctx.fillStyle = "rgba(0,0,0,0.8)";
   ctx.fill();
 }

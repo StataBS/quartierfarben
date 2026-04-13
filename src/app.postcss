@@ -1,4 +1,26 @@
-/* Write your global styles here, in PostCSS syntax */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "@kanton-basel-stadt/designsystem/assets/css/tailwind.css";
+
+@layer components {
+  select.select-field {
+    @apply border border-blue-900 bg-white rounded p-10 text-base text-gray-900 h-[46px] w-full;
+    @apply hover:border-blue-500;
+    @apply focus:outline-none focus:shadow-purple-600 focus:border-purple-600;
+  }
+
+  select.select-field-header {
+    @apply border border-blue-900 bg-white rounded px-10 text-sm text-gray-900 h-[38px] w-auto min-w-[7.5rem] max-w-[12rem];
+    @apply hover:border-blue-500;
+    @apply focus:outline-none focus:shadow-purple-600 focus:border-purple-600;
+  }
+}
+
+/* One-shot scale “pop” on hover (Drucken, layers, feedback mail, GitHub); Herunterladen keeps animate-jump-y */
+@keyframes ds-icon-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.13);
+  }
+}

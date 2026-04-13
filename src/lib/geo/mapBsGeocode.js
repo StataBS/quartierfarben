@@ -1,7 +1,4 @@
-/**
- * Kanton Basel-Stadt Search API only. For other regions, set `geocodeProvider` to `"nominatim"`
- * in `settings.js` and use `geocodeSearch.js`.
- */
+/** Kanton Basel-Stadt Search API (api.geo.bs.ch/search/v1). */
 import coordinates, { LV95, WGS84 } from "@swissgeo/coordinates";
 
 const MAP_BS_SEARCH = "https://api.geo.bs.ch/search/v1/search";

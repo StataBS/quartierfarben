@@ -1,31 +1,38 @@
 <script>
   import "maplibre-gl/dist/maplibre-gl.css";
   import maplibregl from "maplibre-gl";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import { get } from "svelte/store";
   import mapStyle from "./mapStyle.js";
   import MapKey from "./MapKey.svelte";
+  import BasemapDropdown from "./BasemapDropdown.svelte";
+  import { BASEMAP_LAYER_IDS, basemapAttribution } from "$lib/basemapTiles.js";
 
   import drawCanvasCircle from "$assets/scripts/drawCanvasCircle";
-  import drawCanvasPolygon from "$assets/scripts/drawCanvasPolygon";
-  import getMaxCircleRadius from "$assets/scripts/getMaxCircleRadius";
   import getLanduseSizes from "$assets/scripts/getLanduseSizes";
   import getCircleGeom from "$assets/scripts/getCircleGeom";
   import checkCirleFits from "$assets/scripts/checkCirleFits";
-  import bbox from "@turf/bbox";
   import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-  import {
-    getAreaModeConfig,
-    locationLabelPolygonModeId,
-    CIRCLE_MODE_ID
-  } from "$lib/cityConfig.js";
+  import { circleLocationNeighbourhood } from "$lib/cityConfig.js";
   import {
     landuses,
     mapBounds,
+    sidebarWidthLgPx,
     initialMapCenter,
+    initialMapZoom,
     mapMaxZoom,
     mapMinZoom,
     analysisRadiusInMeters
   } from "$lib/settings.js";
+  import {
+    getViewportCenterLngLat,
+    zoomInAroundAnalysisFocal,
+    zoomOutAroundAnalysisFocal
+  } from "$lib/geo/viewportAnalysisCenter.js";
+  import {
+    parseAnalysisHash,
+    formatAnalysisHash
+  } from "$lib/geo/analysisUrlHash.js";
 
   import {
     areaSizes,
@@ -33,15 +40,13 @@
     dimensions,
     totalSize,
     mapCenter,
-    showBasemap,
+    basemapId,
     locationText,
     useLocationAsText,
     textVis,
     newBounds,
     isMobile,
-    lang,
-    selectedAreaFeature,
-    analysisMode
+    lang
   } from "$lib/stores.js";
 
   import en from "$locales/en.json";
@@ -57,11 +62,25 @@
 
 
   let map;
+  let mapShell;
+  /** Hide map until camera/hash sync is ready (avoids flash before layout is stable). */
+  let showMapCanvas = false;
 
-  function setShowBasemap(show) {
-    if (!map) return;
+  const basemapLayerIdsList = Object.values(BASEMAP_LAYER_IDS);
 
-    map.setLayoutProperty("osm", "visibility", !show ? "none" : "visible");
+  /** @param {string} id */
+  function basemapStoreIdToLayerId(id) {
+    if (id === "none") return null;
+    return BASEMAP_LAYER_IDS[id] ?? null;
+  }
+
+  /** @param {string} id */
+  function applyBasemapVisibility(id) {
+    if (!map?.getStyle()) return;
+    const active = basemapStoreIdToLayerId(id);
+    for (const lid of basemapLayerIdsList) {
+      map.setLayoutProperty(lid, "visibility", active === lid ? "visible" : "none");
+    }
   }
 
   function setBounds(b) {
@@ -78,7 +97,7 @@
     }
   }
 
-  $: setShowBasemap($showBasemap);
+  $: applyBasemapVisibility($basemapId);
 
   $: drawAndCount(map, $useLocationAsText);
 
@@ -86,257 +105,294 @@
 
   $: setScrollZoom($isMobile);
 
-  // React to area selection changes - fit map bounds
-  let lastAreaId = null;
-  let lastAreaType = null;
-  
-  $: if ($selectedAreaFeature && $analysisMode !== CIRCLE_MODE_ID) {
-    if (map && map.loaded()) {
-      const modeConfig = getAreaModeConfig($analysisMode);
-      const currentId = modeConfig && $selectedAreaFeature.properties[modeConfig.idProperty];
-      if (currentId && (lastAreaId !== currentId || lastAreaType !== $analysisMode)) {
-        lastAreaId = currentId;
-        lastAreaType = $analysisMode;
-        const bounds = bbox($selectedAreaFeature);
-        map.fitBounds(
-          [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
-          { padding: 50, duration: 1000 }
-        );
-        setTimeout(() => {
-          if (map && map.getLayer("landuse")) {
-            drawAndCount(map);
-          }
-        }, 1100);
-      }
-    }
-  }
-
-  $: if ($analysisMode === CIRCLE_MODE_ID) {
-    lastAreaId = null;
-    lastAreaType = null;
-  }
-
-  $: if (map && $analysisMode !== CIRCLE_MODE_ID) {
-    if (window.location.hash) {
-      const url = new URL(window.location.href);
-      url.hash = "";
-      window.history.replaceState({}, "", url.toString());
-    }
-  }
-
   $circleRadius = analysisRadiusInMeters;
 
   const drawAndCount = function (map) {
     if (!map || !map.getLayer("landuse")) return;
-    
+
     const canvas = document.getElementById("myCanvas");
-    let polygonGeom;
-    let usePolygon = false;
-    let selectedFeature = null;
 
-    const modeConfig = getAreaModeConfig($analysisMode);
-    if (modeConfig && modeConfig.data && $selectedAreaFeature) {
-      usePolygon = true;
-      selectedFeature = $selectedAreaFeature;
-      polygonGeom = $selectedAreaFeature.geometry;
-      const center = bbox($selectedAreaFeature);
-      const centerLon = (center[0] + center[2]) / 2;
-      const centerLat = (center[1] + center[3]) / 2;
-      $mapCenter = [centerLon.toFixed(3), centerLat.toFixed(3)];
-      $locationText = $selectedAreaFeature.properties[modeConfig.nameProperty];
-      if ($useLocationAsText) {
-        $textVis = $locationText;
-      }
-    } else {
-      // Use circle
-      const mC = map.getCenter().toArray();
-      $mapCenter = [mC[0].toFixed(3), mC[1].toFixed(3)];
+    const mC = getViewportCenterLngLat(map);
+    $mapCenter = [mC[0].toFixed(3), mC[1].toFixed(3)];
 
-      polygonGeom = getCircleGeom(map, {
-        radius: $circleRadius,
-        steps: 16,
-      });
+    const polygonGeom = getCircleGeom(map, {
+      radius: $circleRadius,
+      steps: 16,
+      center: mC,
+    });
 
-      let circleFits = checkCirleFits(map, polygonGeom);
-      if (!circleFits) {
-        const { width, height } = map.getContainer().getBoundingClientRect();
-        const ctx = canvas.getContext("2d");
-        canvas.width = width;
-        canvas.height = height;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        return;
-      }
+    let circleFits = checkCirleFits(map, polygonGeom);
+    if (!circleFits) {
+      const { width, height } = map.getContainer().getBoundingClientRect();
+      const ctx = canvas.getContext("2d");
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
 
-      // Optionally resolve location name from a polygon layer (e.g. wohnviertel)
-      const labelModeConfig = locationLabelPolygonModeId && getAreaModeConfig(locationLabelPolygonModeId);
-      let foundFeature = null;
-      if (labelModeConfig?.data?.features) {
-        const centerPoint = {
-          type: "Feature",
-          geometry: { type: "Point", coordinates: mC }
-        };
-        for (const feature of labelModeConfig.data.features) {
-          if (booleanPointInPolygon(centerPoint, feature)) {
-            foundFeature = feature;
-            break;
-          }
+    const labelCfg = circleLocationNeighbourhood?.data?.features?.length
+      ? circleLocationNeighbourhood
+      : null;
+    let foundFeature = null;
+    if (labelCfg) {
+      const centerPoint = {
+        type: "Feature",
+        geometry: { type: "Point", coordinates: mC }
+      };
+      for (const feature of labelCfg.data.features) {
+        if (booleanPointInPolygon(centerPoint, feature)) {
+          foundFeature = feature;
+          break;
         }
       }
-      if (foundFeature) {
-        $locationText = foundFeature.properties[labelModeConfig.nameProperty];
-      } else {
-        $locationText = "Lat " + $mapCenter[1] + " N, Lng " + $mapCenter[0] + " E";
-      }
-      
-      if ($useLocationAsText) {
-        $textVis = $locationText;
-      }
+    }
+    if (foundFeature) {
+      $locationText = foundFeature.properties[labelCfg.nameProperty];
+    } else {
+      $locationText = "";
+    }
+
+    if ($useLocationAsText) {
+      $textVis = $locationText;
     }
 
     const { sizes, sumSizes } = getLanduseSizes(map, polygonGeom, landuses);
     $areaSizes = sizes;
     $totalSize = sumSizes;
 
-    // Draw the appropriate shape
-    if (usePolygon) {
-      drawCanvasPolygon(map, canvas, polygonGeom);
-    } else {
-      drawCanvasCircle(map, canvas, $circleRadius);
-    }
+    drawCanvasCircle(map, canvas, $circleRadius);
   };
 
   onMount(() => {
-    const enableHash = $analysisMode === CIRCLE_MODE_ID;
-    
     map = new maplibregl.Map({
       container: "map", // container id
       style: mapStyle(window.location.origin + window.location.pathname),
       maxBounds: mapBounds,
       dragRotate: false,
       attributionControl: false,
-      hash: enableHash, // Only enable hash in circle mode
+      /* Built-in hash tracks map.getCenter(); we sync #zoom/lat/lng to the analysis focal (not always getCenter()). */
+      hash: false,
       minZoom: mapMinZoom,
       maxZoom: mapMaxZoom,
       center: initialMapCenter,
-      zoom: 13,
+      zoom: initialMapZoom,
     });
-    
-    if ($analysisMode !== CIRCLE_MODE_ID) {
-      if (window.location.hash) {
-        const url = new URL(window.location.href);
-        url.hash = "";
-        window.history.replaceState({}, "", url.toString());
+
+    function resizeMap() {
+      if (map) map.resize();
+    }
+
+    /** Until false, do not write #hash (camera/layout not ready yet). */
+    let blockAnalysisHashSync = true;
+
+    /** Debounce heavy land-use aggregation + hash sync after pan/zoom/resize. */
+    let landuseRecomputeTimer;
+    function scheduleLanduseRecompute(delay) {
+      clearTimeout(landuseRecomputeTimer);
+      landuseRecomputeTimer = setTimeout(() => {
+        if (map?.loaded()) {
+          drawAndCount(map);
+          syncAnalysisUrlFromMap();
+        }
+      }, delay);
+    }
+
+    function syncAnalysisUrlFromMap() {
+      if (blockAnalysisHashSync) return;
+      if (!map?.loaded()) return;
+      const next = formatAnalysisHash(map);
+      if (window.location.hash !== next) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search + next
+        );
       }
     }
 
-    map.on("load", function () {
-      drawAndCount(map);
+    resizeMap();
+    requestAnimationFrame(resizeMap);
 
-      map.on("moveend", function (e) {
-        const canvas = document.getElementById("myCanvas");
-        if ($selectedAreaFeature) {
-          drawCanvasPolygon(map, canvas, $selectedAreaFeature.geometry);
-        } else {
-          drawCanvasCircle(map, canvas, $circleRadius);
+    function onWindowResize() {
+      resizeMap();
+      scheduleLanduseRecompute(200);
+    }
+    window.addEventListener("resize", onWindowResize);
+
+    function onHashChange() {
+      if (!map?.loaded()) return;
+      const parsed = parseAnalysisHash(window.location.hash);
+      if (!parsed) return;
+      blockAnalysisHashSync = false;
+      map.jumpTo({ zoom: parsed.zoom, center: [parsed.lng, parsed.lat], duration: 0 });
+      requestAnimationFrame(() => {
+        resizeMap();
+        drawAndCount(map);
+        syncAnalysisUrlFromMap();
+      });
+    }
+    window.addEventListener("hashchange", onHashChange);
+
+    let resizeObserver;
+    tick().then(() => {
+      if (typeof ResizeObserver !== "undefined" && mapShell) {
+        resizeObserver = new ResizeObserver(() => resizeMap());
+        resizeObserver.observe(mapShell);
+      }
+    });
+
+    map.on("load", function () {
+      resizeMap();
+      applyBasemapVisibility(get(basemapId));
+
+      /** After tiles settle — registered after first circle draw to avoid a premature wrong hash. */
+      function scheduleIdleLanduseRedraw() {
+        map.once("idle", () => {
+          requestAnimationFrame(() => {
+            resizeMap();
+            drawAndCount(map);
+            syncAnalysisUrlFromMap();
+          });
+        });
+      }
+
+      function finishCircleViewportAlign() {
+        const parsed = parseAnalysisHash(window.location.hash);
+        if (parsed) {
+          map.jumpTo({ zoom: parsed.zoom, center: [parsed.lng, parsed.lat], duration: 0 });
         }
-        if ($analysisMode !== CIRCLE_MODE_ID && window.location.hash) {
-          const url = new URL(window.location.href);
-          url.hash = "";
-          window.history.replaceState({}, "", url.toString());
-        }
-        setTimeout(() => drawAndCount(map), 100);
+        resizeMap();
+        requestAnimationFrame(() => {
+          try {
+            blockAnalysisHashSync = false;
+            drawAndCount(map);
+            syncAnalysisUrlFromMap();
+          } finally {
+            showMapCanvas = true;
+          }
+          scheduleIdleLanduseRedraw();
+        });
+      }
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resizeMap();
+          finishCircleViewportAlign();
+        });
       });
 
-      map.on("zoomend", function (e) {
+      map.on("moveend", function () {
         const canvas = document.getElementById("myCanvas");
-        if ($selectedAreaFeature) {
-          drawCanvasPolygon(map, canvas, $selectedAreaFeature.geometry);
-        } else {
-          drawCanvasCircle(map, canvas, $circleRadius);
-        }
-        if ($analysisMode !== CIRCLE_MODE_ID && window.location.hash) {
-          const url = new URL(window.location.href);
-          url.hash = "";
-          window.history.replaceState({}, "", url.toString());
-        }
-        setTimeout(() => drawAndCount(map), 100);
+        drawCanvasCircle(map, canvas, $circleRadius);
+        scheduleLanduseRecompute(100);
+      });
+
+      map.on("zoomend", function () {
+        const canvas = document.getElementById("myCanvas");
+        drawCanvasCircle(map, canvas, $circleRadius);
+        scheduleLanduseRecompute(100);
       });
     });
+
+    return () => {
+      clearTimeout(landuseRecomputeTimer);
+      window.removeEventListener("resize", onWindowResize);
+      window.removeEventListener("hashchange", onHashChange);
+      resizeObserver?.disconnect();
+      map?.remove();
+    };
   });
 </script>
 
-<div id="map" class="w-full h-1/2 lg:h-screen !absolute left-0 z-0">
-  <canvas id="myCanvas" class="absolute" />
-</div>
+<!-- #map must stay empty: MapLibre owns it. Overlay canvas is a sibling. -->
+<div
+  bind:this={mapShell}
+  class="relative flex h-full min-h-full min-w-0 w-full flex-1 lg:min-h-0 lg:h-full"
+  class:pointer-events-none={!showMapCanvas}
+  class:opacity-0={!showMapCanvas}
+  style="--sidebar-overlay-w: {$isMobile ? 0 : sidebarWidthLgPx}px;"
+>
+  <div id="map" class="absolute inset-0 z-0 min-h-[120px] w-full"></div>
+  <canvas id="myCanvas" class="pointer-events-none absolute inset-0 z-[1] h-full w-full"></canvas>
 
-<div class="relative w-full h-full pointer-events-none">
+  <div class="pointer-events-none absolute inset-0 z-10 min-h-0">
   {#if !$isMobile}
     <MapKey />
   {/if}
-  <button
-    class="btn btn-primary drop-shadow-xl text-2xl btn-circle absolute left-4 top-4  leading-7 z-40 pointer-events-auto "
-    on:click={() => map.zoomIn()}
-    on:keypress={() => map.zoomIn()}
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="26"
-      height="26"
-      fill="currentColor"
-      class="bi bi-plus"
-      viewBox="0 0 16 16"
-    >
-      <path
-        d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"
-      />
-    </svg>
-  </button>
-  <button
-    class="btn btn-primary drop-shadow-xl text-2xl btn-circle absolute left-4 top-10 mt-8   leading-7 z-40 pointer-events-auto"
-    on:click={() => map.zoomOut()}
-    on:keypress={() => map.zoomOut()}
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="26"
-      height="26"
-      fill="currentColor"
-      class="bi bi-dash"
-      viewBox="0 0 16 16"
-    >
-      <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z" />
-    </svg>
-  </button>
-
-  {#if $analysisMode === CIRCLE_MODE_ID}
-    <div class="absolute right-2 bottom-8 z-50 text-md">
-      {appText.map.radius}: {$circleRadius}m
-    </div>
-  {:else if $selectedAreaFeature}
-    {@const modeConfig = getAreaModeConfig($analysisMode)}
-    {#if modeConfig}
-      <div class="absolute right-2 bottom-8 z-50 text-md">
-        {$selectedAreaFeature.properties[modeConfig.nameProperty]}
-      </div>
-    {/if}
-  {/if}
   <div
-    class="absolute right-0 bottom-12 z-50 form-control w-fit pointer-events-auto"
+    class="absolute left-[1rem] top-[1rem] z-40 flex flex-col gap-[0.5rem] pointer-events-auto lg:left-[calc(var(--sidebar-overlay-w)+1rem)]"
   >
-    <label class="cursor-pointer label">
-      <span class="mx-2 text-md">{appText.map.basemap}</span>
-      <input
-        type="checkbox"
-        bind:checked={$showBasemap}
-        class="toggle toggle-primary"
+    <button
+      type="button"
+      class="button is-strong is-icon-only drop-shadow-xl"
+      on:click={() => map && zoomInAroundAnalysisFocal(map)}
+      on:keypress={() => map && zoomInAroundAnalysisFocal(map)}
+      aria-label="Zoom in"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="currentColor"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <path
+          d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"
+        />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="button is-strong is-icon-only drop-shadow-xl"
+      on:click={() => map && zoomOutAroundAnalysisFocal(map)}
+      on:keypress={() => map && zoomOutAroundAnalysisFocal(map)}
+      aria-label="Zoom out"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="currentColor"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z" />
+      </svg>
+    </button>
+  </div>
+
+  <div
+    class="pointer-events-auto absolute bottom-[1rem] right-[1rem] z-50 flex max-w-[min(100%-2rem,20rem)] flex-col items-end gap-y-2"
+  >
+    <span
+      class="shrink-0 text-right text-base font-medium leading-snug text-gray-900"
+      style="text-shadow: 1px 0 #fff, -1px 0 #fff, 0 1px #fff, 0 -1px #fff;"
+    >
+      {appText.map.radius}: {$circleRadius}m
+    </span>
+    <div class="flex max-w-[min(100%,20rem)] flex-col items-end gap-y-1">
+      <BasemapDropdown
+        ariaLabel={appText.map.basemapAria}
+        optionLabels={appText.map.basemapOptions}
       />
-    </label>
+      {#if basemapAttribution[$basemapId]}
+        <div
+          class="text-right text-xs leading-snug text-gray-800 [&_a]:underline"
+          style="text-shadow: 1px 0 #fff, -1px 0 #fff, 0 1px #fff, 0 -1px #fff;"
+        >
+          {@html basemapAttribution[$basemapId]}
+        </div>
+      {/if}
+    </div>
+  </div>
   </div>
 </div>
 
 <style>
+  /* z-index set on element; keep below UI overlay (z-10) */
   #myCanvas {
-    z-index: 10;
     pointer-events: none;
   }
 </style>

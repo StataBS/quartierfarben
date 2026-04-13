@@ -1,11 +1,25 @@
 <script>
-  import { svg, dimensions, lang, printBackUI, isMobile } from "$lib/stores.js";
+  import { onMount } from "svelte";
+  import { browser } from "$app/environment";
+  import { svg, dimensions, lang, printBackUI, showCoordinates } from "$lib/stores.js";
   import font from "$assets/scripts/font";
   import { encode } from "$assets/scripts/base64";
   import {downloadFilename, backsideSuffix} from "$lib/settings.js";
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
+
+  function syncPrintModeFromUrl() {
+    if (!browser) return;
+    const kiosk = new URLSearchParams(window.location.search).has("kiosk");
+    $printBackUI = !kiosk;
+  }
+
+  onMount(() => {
+    syncPrintModeFromUrl();
+    window.addEventListener("popstate", syncPrintModeFromUrl);
+    return () => window.removeEventListener("popstate", syncPrintModeFromUrl);
+  });
 
   let appText = {};
   $: {
@@ -73,21 +87,27 @@
   function downloadSVG(svg, suffix) {
     var b64;
     if (svg._groups) {
-      const defs = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "defs"
-      );
-      const style = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "style"
-      );
-      style.type = "text/css";
-      // prettier-ignore
-      style.innerHTML = font('Outfit');
-      defs.appendChild(style);
-      svg.node().appendChild(defs);
+      const titleText = svg.selectAll(".title-text");
+      titleText.attr("opacity", 1);
+      try {
+        const defs = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "defs"
+        );
+        const style = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "style"
+        );
+        style.type = "text/css";
+        // prettier-ignore
+        style.innerHTML = font('Outfit');
+        defs.appendChild(style);
+        svg.node().appendChild(defs);
 
-      b64 = encode(svg.node().outerHTML);
+        b64 = encode(svg.node().outerHTML);
+      } finally {
+        titleText.attr("opacity", 0);
+      }
       //b64 = encodeURIComponent('<?xml version="1.0" encoding="utf-8"?>' + svg.node().outerHTML);
     } else {
       b64 = encode(svg.outerHTML);
@@ -154,24 +174,95 @@
   }
 </script>
 
-<button
-  on:click={() => {
-    downloadSVG($svg);
-  }}
-  class="btn btn-secondary mb-4"
-  class:mt-4={!$isMobile}
-  >{!$printBackUI ? appText.buttons.printFront : appText.buttons.downloadFront}</button
->
-
-<br />
-
-{#if $printBackUI}
-  <button
-    on:click={() => {
-      downloadSVGback();
-    }}
-    class="btn btn-primary btn-outline mb-6"
+<!-- Kanton BS symbol: designsystem/dist/assets/symbols/download.svg -->
+<div class="flex w-full flex-col gap-[1.25rem]">
+  <div class="flex w-full flex-col gap-[0.75rem]">
+    <button
+      type="button"
+      on:click={() => {
+        downloadSVG($svg);
+      }}
+      class="button group/download w-full max-w-none"
     >
-    {@html appText.buttons.downloadBack}</button
-  >
-{/if}
+      {#if $printBackUI}
+        <svg
+          class="shrink-0 group-hover/download:animate-jump-y"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 20 20"
+          width="20"
+          height="20"
+          aria-hidden="true"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 16.667h10M10 3.333v10m0 0 2.917-2.916M10 13.333l-2.917-2.916"
+          />
+        </svg>
+      {:else}
+        <svg
+          class="h-5 w-5 shrink-0 origin-center group-hover/download:animate-[ds-icon-pop_0.45s_ease]"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+          />
+        </svg>
+      {/if}
+      <span>{$printBackUI ? appText.buttons.downloadFront : appText.buttons.printFront}</span>
+    </button>
+
+    {#if $printBackUI}
+      <button
+        type="button"
+        on:click={() => {
+          downloadSVGback();
+        }}
+        class="button is-inverted group/download-back w-full max-w-none"
+      >
+        <svg
+          class="shrink-0 group-hover/download-back:animate-jump-y"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 20 20"
+          width="20"
+          height="20"
+          aria-hidden="true"
+          ><path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 16.667h10M10 3.333v10m0 0 2.917-2.916M10 13.333l-2.917-2.916"
+          /></svg
+        >
+        <span>{@html appText.buttons.downloadBack}</span>
+      </button>
+    {/if}
+  </div>
+
+  <div class="w-full">
+    <label
+      class="label !m-0 !inline-flex !w-auto !max-w-full !flex-row !flex-nowrap !items-center !justify-start !gap-[0.625rem] !pb-0 cursor-pointer"
+    >
+      <span class="shrink text-base leading-snug text-gray-900">{appText.inputs.showCoordinates}</span>
+      <span class="toggle-switch shrink-0">
+        <input
+          type="checkbox"
+          class="toggle-switch-input"
+          bind:checked={$showCoordinates}
+        />
+      </span>
+    </label>
+  </div>
+</div>

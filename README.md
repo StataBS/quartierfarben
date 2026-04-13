@@ -42,10 +42,6 @@ To deploy your app, simply copy the `build` folder to your web server.
 
 ## Data Processing Pipeline & Tile-Creation
 
-This repository does **not** include the generated tiles. Tiles for the date 03.02.2026 can be downloaded from an [older repository](https://github.com/opendatabs/quartierfarben/tree/main/static/tiles), where tiles were generated daily using GitHub Actions. To generate tiles from the latest data, follow the steps below.
-
----
-
 The data processing was done in Python and marimo.
 
 Check it out on molab: [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/notebooks/nb_sCzG84NCwnu8Za71PuSefC)
@@ -144,35 +140,30 @@ The landuse data *Bodenbedeckung* and all other data used in this project can be
 
 The application is built to be easily implemented in other cities if suitable data is available.
 
+### Reference implementation ([opendatabs/quartierfarben](https://github.com/opendatabs/quartierfarben))
+
+The **[opendatabs/quartierfarben](https://github.com/opendatabs/quartierfarben)** repository on GitHub is the **baseline fork-oriented app**: it still ships **optional Nominatim geocoding** (for regions without a canton search API like MapBS) and **polygon analysis modes** (e.g. choosing an area such as Wahlkreis or Wohnviertel from a dropdown). **This codebase removes those features** on purpose—smaller bundle, simpler UX, and less runtime work—while keeping circle analysis and optional neighbourhood labels for the postcard. If you need Nominatim or full polygon modes, compare against or port from that repo.
+
 | What to adapt | Where |
 |---------------|--------|
 | **App name, map bounds, URLs, etc.** | [`src/lib/settings.js`](src/lib/settings.js) — at least: `projectTitle`, `og_siteName`, `mapBounds`, `initialMapCenter`, `url` |
-| **Address search (geocoding)** | See below (**Geocoding: MapBS vs Nominatim**). |
-
-### Geocoding: MapBS vs Nominatim
-
-**This deployment (Kanton Basel-Stadt)** uses the canton’s [Search / Suchdienst API](https://api.geo.bs.ch/search/v1/) ([documentation](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/api#suchdienst)). That service is **only available for Basel-Stadt**.
-
-**Adapting the app to another city** where MapBS does not apply: in [`src/lib/settings.js`](src/lib/settings.js) set `geocodeProvider` to `"nominatim"`, tune `mapBounds` and `nominatimCountryCodes` for your area, and follow [Nominatim’s usage policy](https://operations.osmfoundation.org/policies/nominatim/) (heavy use may require your own instance or a proxy).
-
-| Provider | Setting | Implementation |
-|----------|---------|----------------|
-| MapBS (default here) | `geocodeProvider: "mapbs"` | [`src/lib/geo/mapBsGeocode.js`](src/lib/geo/mapBsGeocode.js) |
-| Nominatim | `geocodeProvider: "nominatim"` | [`src/lib/geo/nominatimGeocode.js`](src/lib/geo/nominatimGeocode.js) |
-
-The UI calls [`src/lib/geo/geocodeSearch.js`](src/lib/geo/geocodeSearch.js) (`searchAddresses`), which dispatches by `geocodeProvider`. Entry points: [`src/components/search/requestAddress.js`](src/components/search/requestAddress.js), [`src/components/map/Gecoder.svelte`](src/components/map/Gecoder.svelte).
+| **Address search (geocoding)** | [`src/lib/geo/geocodeSearch.js`](src/lib/geo/geocodeSearch.js) (`searchAddresses`) → [`src/lib/geo/mapBsGeocode.js`](src/lib/geo/mapBsGeocode.js). UI entry: [`src/components/search/requestAddress.js`](src/components/search/requestAddress.js) (used by the sidebar search). |
 | **Categories and colors** | [`src/lib/colors.json`](src/lib/colors.json) — `categories`, `palettes`, and `landuseMapping` (see Land-use data below) |
-| **Area modes** | [`src/lib/cityConfig.js`](src/lib/cityConfig.js) (see below) |
-| **Texts and labels** | [`src/locales/`](src/locales/) — add keys under `inputs` for new area modes |
+| **Analysis area & neighbourhood label** | [`src/lib/cityConfig.js`](src/lib/cityConfig.js) — see **Analysis (circle) & neighbourhood name** below |
+| **Texts and labels** | [`src/locales/`](src/locales/) |
 | **Map outline on postcard** | [`src/lib/borders.js`](src/lib/borders.js) — a GeoJSON FeatureCollection (e.g. `export default function () { return { type: "FeatureCollection", features: [...] }; }`) |
 | **Tiles and static assets** | `static/` (tiles), plus any images |
 
-### Area modes (circle, Wahlkreis, Wohnviertel, …)
+### Geocoding (address search)
 
-Analysis modes are in [`src/lib/cityConfig.js`](src/lib/cityConfig.js). **Circle** mode (radius around a point) is always available; you can add polygon modes (e.g. districts, neighbourhoods) so users pick an area from a dropdown.
+**This deployment (Kanton Basel-Stadt)** uses the canton’s [Search / Suchdienst API](https://api.geo.bs.ch/search/v1/) ([documentation](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/api#suchdienst)).
 
-- **Circle only:** Set `areaModes` to `[{ id: "circle", labelKey: "useCircle", default: true }]`, set `locationLabelPolygonModeId = null`, and **remove or comment out** the `import wahlkreiseData` / `import wohnviertelData` lines (and any polygon entries in `areaModes`) so the file doesn’t reference missing data.
-- **Circle + polygon modes:** Keep the default. Each polygon mode needs `id`, `labelKey`, `selectLabelKey`, `data` (GeoJSON), `idProperty`, and `nameProperty`. Add matching keys in `src/locales/*.json` under `inputs` and a GeoJSON module per mode. Optionally set `locationLabelPolygonModeId` to the mode whose polygons supply the location name in circle mode (e.g. neighbourhood under the coordinates).
+### Analysis (circle) & neighbourhood name
+
+Land-use analysis uses a **circle** around the map focal point only. Configuration is in [`src/lib/cityConfig.js`](src/lib/cityConfig.js):
+
+- **`areaModes`** — must include the **circle** entry (only analysis mode in this deployment).
+- **`circleLocationNeighbourhood`** — optional GeoJSON + `nameProperty` used for the **postcard / map label** (e.g. Wohnviertel name via point-in-polygon at the centre). Set `data` to `null` to disable neighbourhood names, or point `data` at your own boundary GeoJSON and set `nameProperty` to the label attribute.
 
 ### Land-use data
 
@@ -212,5 +203,6 @@ Texts and content available as [CC BY 4.0](https://creativecommons.org/licenses/
 
 ## Related Projects
 
-[Kiezcolors Berlin](https://kiezcolors.odis-berlin.de)
-[Grätzlfarben Wien](https://cartolab.at/graetzlfarben/)
+- [opendatabs/quartierfarben](https://github.com/opendatabs/quartierfarben) — reference app (Nominatim + polygon analysis modes for forks)
+- [Kiezcolors Berlin](https://kiezcolors.odis-berlin.de)
+- [Grätzlfarben Wien](https://cartolab.at/graetzlfarben/)

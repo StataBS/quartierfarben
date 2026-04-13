@@ -1,42 +1,70 @@
 {
-    "meta": {
-        "description": "A map based tool to create a postcard showing the landuse distribution in your neighborhood"
+  "header": {
+    "language": "Language"
+  },
+  "meta": {
+    "description": "A map based tool to create a postcard showing the landuse distribution in your neighborhood"
+  },
+  "description": "From forest to water, from industry to park—the character of the land shapes our environment. <span class='font-bold'>Quartierfarben</span> makes the diversity of the urban canton visible in a small snapshot: explore your neighbourhood and download a personal postcard.",
+  "footer": {
+    "background": "Quartierfarben was initially developed for Berlin under the name '<a class='underline' target='_blank' href='https://kiezcolors.odis-berlin.de/'>Kiezcolors</a>' by ODIS and CityLAB Berlin. The Research Unit Cartography at TU Wien adapted it for Vienna with '<a class='underline' target='_blank' href='https://cartolab.at/graetzlfarben/'>Grätzlfarben</a>'. The <a href='https://www.bs.ch/daten/databs/dcc' class='underline' target='_blank'>DCC Data Competence Center</a> of the Statistical Office of the Canton Basel-Stadt reused the project for its own Canton. The code for this project can by found on <a class='underline' target='_blank' href='https://github.com/statabs/quartierfarben'>GitHub.</a>",
+    "impressumHtml": "The visualisation is based on aggregated land-cover data. The map shows how land is used, not who may use it. Green or sports areas may be private or only partly accessible. <br><br><strong>Data sources</strong><ul style='margin:0.5rem 0 0.35rem 0;padding-left:1.25rem;list-style-type:disc'><li><strong>Land cover</strong>: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Bodenbedeckung&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte'>MapBS</a>, <a class='underline' target='_blank' href='https://data.bs.ch/explore/assets/100477/'>Datenportal Kanton Basel-Stadt</a></li><li><strong>Building categories</strong>: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=Geb%C3%A4udeinformationen&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_Geb%C3%A4udeinformationen=DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie'>MapBS</a></li><li><strong>Public space</strong>: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20grau&tree_groups=%C3%96ffentlicher%20Raum&map_x=2611402&map_y=1267654&map_zoom=4&tree_group_layers_%C3%96ffentlicher%20Raum=OR_OeffentlicherRaum'>MapBS</a></li><li><strong>Culture (points of interest)</strong>: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Basel%20Info%20Points%20of%20Interest&tree_group_layers_Basel%20Info%20Points%20of%20Interest=BI_KulturUnterhaltung'>MapBS</a>, <a class='underline' target='_blank' href='https://data.bs.ch/explore/dataset/100015/table/?disjunctive.subkatgeo&disjunctive.kategorie&disjunctive.art&disjunctive.ort&refine.kategorie=Kultur+%26+Unterhaltung'>Datenportal Kanton Basel-Stadt</a></li><li><strong>School locations</strong>: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=SchulenRiehenBettingen%2CSchulstandorte_Basel&tree_group_layers_SchulenRiehenBettingen=SO_BezeichnungStandort_Tagesstruktur%2CSO_BezeichnungStandort_Kindergarten%2CSO_BezeichnungStandort_Primarschule%2CSO_Tagesstruktur%2CSO_Kindergarten%2CSO_Primarschule&tree_group_layers_Schulstandorte_Basel=SC_Tagesstruktur%2CSC_Turnhalle%2CSC_Sportplatz%2CSC_Schwimmhalle%2CSC_Kindergarten%2CSC_Primarschule%2CSC_Sekundarschule%2CSC_Gymnasium%2CSC_ZentrumBrueckenangebote%2CSC_Spezialangebot%2CSC_Gewerbeschule'>MapBS</a>, <a class='underline' target='_blank' href='https://data.bs.ch/explore/?q=Schulstandorte'>Datenportal Kanton Basel-Stadt</a></li></ul><br>Methodology (data preparation) is documented in the <a class='underline' target='_blank' href='https://github.com/statabs/quartierfarben'>Quartierfarben GitHub repository</a>. <br><br>Location search uses the <a class='underline' target='_blank' href='https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/api#suchdienst'>MapBS search API</a> (Geoinformation APIs, Canton of Basel-Stadt). <br><br>Basemaps: <a class='underline' target='_blank' href='https://map.geo.bs.ch/'>MapBS</a>. Geodata © Canton of Basel-Stadt and OpenStreetMap.",
+    "accessibilityStatement": "We strive to make this application as accessible as possible. You can send accessibility feedback by e-mail to opendata@bs.ch.",
+    "imprint": "Imprint: <br> This is a prototype – Data and functionality without warranty! Developed at the <a href='https://statistik.bs.ch/' class='underline' target='_blank'>Statistical Office of the Canton Basel-Stadt</a>"
+  },
+  "siteFooter": {
+    "srTitle": "Footer",
+    "ariaQuick": "Quick links",
+    "ariaSocial": "Social media",
+    "ariaMeta": "Legal links",
+    "aboutUs": "About us",
+    "geoinformation": "Geoinformation",
+    "kiezcolors": "Kiezcolors",
+    "graetzlfarben": "Grätzlfarben",
+    "github": "GitHub",
+    "feedback": "Feedback",
+    "externalNewTab": "External link, opens in a new tab or window",
+    "startseite": "Home",
+    "datenschutz": "Privacy Policy",
+    "ombudsstelle": "Ombuds office",
+    "impressumHeading": "Imprint",
+    "barrierefreiheitHeading": "Accessibility",
+    "copyright": "© {year} Basel-Stadt"
+  },
+  "inputs": {
+    "search": "Search for a place in Basel-Stadt",
+    "noSearchResults": "No results",
+    "wahlkreis": "Electoral District",
+    "wohnviertel": "Neighborhood",
+    "useCircle": "Use circle",
+    "analysisMode": "Analysis Mode",
+    "selectWahlkreis": "Select Electoral District",
+    "selectWohnviertel": "Select Neighborhood",
+    "showCoordinates": "Show coordinates on postcard"
+  },
+  "buttons": {
+    "downloadFront": "Download",
+    "downloadBack": "Download backside",
+    "printFront": "Print"
+  },
+  "postcard": {
+    "front": {
+      "title": "Your text here",
+      "footer": ""
     },
-    "description": "Here you can create a postcard showing the distribution of <span class='font-bold'>land use in your neighbourhood of the Canton of Basel-Stadt</span>. Simply move the map or search for a location. You can also change the text on the postcard.<br><br>Maps are always (partial) perspectives on reality. Here, too, we have summarised the data in advance. The map also only shows how land is used, but not by whom it can be used. It is therefore possible, for example, that some green or sports areas shown are not accessible to the public.",
-    "footer": {
-        "background": "Quartierfarben was initially developed for Berlin under the name '<a class='underline' target='_blank' href='https://kiezcolors.odis-berlin.de/'>Kiezcolors</a>' by ODIS and CityLAB Berlin. The Research Unit Cartography at TU Wien adapted it for Vienna with '<a class='underline' target='_blank' href='https://cartolab.at/graetzlfarben/'>Grätzlfarben</a>'. The <a href='https://www.bs.ch/daten/databs/dcc' class='underline' target='_blank'>DCC Data Competence Center</a> of the Statistical Office of the Canton Basel-Stadt reused the project for its own Canton. The code for this project can by found on <a class='underline' target='_blank' href='https://github.com/opendatabs/quartierfarben'>GitHub.</a>",
-        "dataSources": "Data sources: <br> Bodenbedeckung: <a class='underline' target='_blank' href='https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Bodenbedeckung&tree_group_layers_Bodenbedeckung=BS_Bodenbedeckungen_befestigt_Bahnareal%2CBS_Bodenbedeckungen_befestigt_Fabrikareal%2CBS_Bodenbedeckungen_befestigt_Gewaesservorland%2CBS_Bodenbedeckungen_befestigt_Hafenareal%2CBS_Bodenbedeckungen_befestigt_Sportanlage%2CBS_Bodenbedeckungen_befestigt_StrasseWeg%2CBS_Bodenbedeckungen_befestigt_Tramareal%2CBS_Bodenbedeckungen_befestigt_Trottoir%2CBS_Bodenbedeckungen_befestigt_Verkehrsinsel%2CBS_Bodenbedeckungen_befestigt_Wasserbecken%2CBS_Bodenbedeckungen_befestigt_uebrigeBefestigte%2CBS_Bodenbedeckungen_bestockt_geschlossenerWald%2CBS_Bodenbedeckungen_bestockt_uebrigeBestockte%2CBS_Bodenbedeckungen_Gebaeude_Gebaeude%2CBS_Bodenbedeckungen_Gebaeude_Tank%2CBS_Bodenbedeckungen_Gewaesser_fliessendes%2CBS_Bodenbedeckungen_Gewaesser_stehendes%2CBS_Bodenbedeckungen_humusiert_AckerWieseWeide%2CBS_Bodenbedeckungen_humusiert_Friedhof%2CBS_Bodenbedeckungen_humusiert_Gartenanlage%2CBS_Bodenbedeckungen_humusiert_ParkanlageSpielplatz%2CBS_Bodenbedeckungen_humusiert_Schrebergarten%2CBS_Bodenbedeckungen_humusiert_SportanlageHumusiert%2CBS_Bodenbedeckungen_humusiert_Tierpark%2CBS_Bodenbedeckungen_humusiert_Reben%2CBS_Bodenbedeckungen_humusiert_Intensivkultur%2CBS_Bodenbedeckungen_humusiert_Gewaesservorland%2CBS_Bodenbedeckungen_humusiert_uebrigeHumusierte'>CC BY 4.0 + OpenStreetMap Kanton Basel-Stadt</a> <br> Strassenkarte: © <a class='underline' target='_blank' href='https://openstreetmap.org'>OpenStreetMap Contributors</a>",
-        "imprint": "Imprint: <br> This is a prototype – Data and functionality without warranty! Developed at the <a href='https://statistik.bs.ch/' class='underline' target='_blank'>Statistical Office of the Canton Basel-Stadt</a>"
-    },
-    "inputs": {
-        "search": "search for a place in Basel-Stadt",
-        "noSearchResults": "No results",
-        "wahlkreis": "Electoral District",
-        "wohnviertel": "Neighborhood",
-        "useCircle": "Use circle",
-        "analysisMode": "Analysis Mode",
-        "selectWahlkreis": "Select Electoral District",
-        "selectWohnviertel": "Select Neighborhood",
-        "showCoordinates": "Show coordinates"
-    },
-    "buttons": {
-        "downloadFront": "Download",
-        "downloadBack": "Download backside",
-        "printFront": "Print"
-    },
-    "postcard": {
-        "front": {
-            "title": "Your text here",
-            "footer": ""
-        },
-        "back": {
-            "description": "How much space do we really need to live, move around, and breathe freely?$Visit opendatabs.github.io/quartierfarben/ to explore how space is distributed in your neighborhood,",
-            "greetings": "With best regards!",
-            "footer": "You can see the area distribution in an {analysisRadiusInMeters} metre radius. Made possible by open administrative data from the Canton Basel-Stadt and the open source project Kiezcolors from ODIS Berlin and Grätzlfarben from TU Vienna."
-        }
-    },
-    "map": {
-        "basemap": "Street Map",
-        "radius": "Radius"
+    "back": {
+      "description": "How much space do we really need to live, move around, and breathe freely?$Visit opendatabs.github.io/quartierfarben/ to explore how space is distributed in your neighborhood,",
+      "greetings": "With best regards!",
+      "footer": "You can see the area distribution in an {analysisRadiusInMeters} metre radius. Made possible by open administrative data from the Canton Basel-Stadt and the open source project Kiezcolors from ODIS Berlin and Grätzlfarben from TU Vienna."
     }
+  },
+  "map": {
+    "radius": "Radius",
+    "basemapAria": "Choose basemap",
+    "basemapOptions": {
+      "none": "None",
+      "grund_grau": "Grey base map",
+      "osm": "OpenStreetMap"
+    }
+  }
 }
