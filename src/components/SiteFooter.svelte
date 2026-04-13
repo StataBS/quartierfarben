@@ -148,14 +148,14 @@
         </li>
         <li>
           <a
-            class="group/github button is-sm is-icon-only"
+            class="button is-sm is-icon-only"
             href={footerLinks.socialGithub}
             aria-label={appText.siteFooter.github}
             target="_blank"
             rel="noopener noreferrer"
           >
             <svg
-              class="h-5 w-5 shrink-0 origin-center group-hover/github:animate-[ds-icon-pop_0.45s_ease]"
+              class="h-5 w-5 shrink-0"
               viewBox="0 0 98 96"
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"

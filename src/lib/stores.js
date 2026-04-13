@@ -23,3 +23,9 @@ export let isMobile = writable(true);
 export let screenWidth = writable(0);
 export let textVis = writable(settings.defaultTextOnCard);
 export let showCoordinates = writable(false); // Toggle to show/hide coordinates on postcard
+
+/** Set by Map.svelte for postcard export: live MapLibre map instance or null */
+export let analysisMap = writable(null);
+
+/** True when the postcard back shows a raster snapshot of the map analysis circle */
+export let postcardBackMapDiskReady = writable(false);

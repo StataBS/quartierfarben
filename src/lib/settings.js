@@ -90,7 +90,7 @@ export const initialMapZoom = 13;
 
 export const mapMinZoom = 12;
 
-export const mapMaxZoom = 17;
+export const mapMaxZoom = 16.5;
 
 export const analysisRadiusInMeters = 250;
 

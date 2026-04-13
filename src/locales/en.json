@@ -56,9 +56,10 @@
       "footer": ""
     },
     "back": {
-      "description": "How much space do we really need to live, move around, and breathe freely?$Visit opendatabs.github.io/quartierfarben/ to explore how space is distributed in your neighborhood,",
-      "greetings": "With best regards!",
-      "footer": "You can see the area distribution in an {analysisRadiusInMeters} metre radius. Made possible by open administrative data from the Canton Basel-Stadt and the open source project Kiezcolors from ODIS Berlin and Grätzlfarben from TU Vienna."
+      "headline": "How much space do we really need to live, get around, and take a deep breath?",
+      "urlLine": "statistik.bs.ch/quartierfarben",
+      "promoBlurb": "Basel is compact and diverse: forests, meadows and water meet industry, traffic and urban life. On the website you can explore your immediate neighbourhood and download it as a personal postcard.",
+      "footerShort": "statistik.bs.ch"
     }
   },
   "map": {

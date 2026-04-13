@@ -55,8 +55,10 @@
       "footer": ""
     },
     "back": {
-      "description": "Wie viel Platz brauchen wir eigentlich, um zu wohnen, uns fortzubewegen und mal tief durchzuatmen?",
-      "footer": "Besuchen Sie statistik.bs.ch/quartierfarben und entdecken Sie Ihre Nachbarschaft."
+      "headline": "Wie viel Platz brauchen wir eigentlich, um zu wohnen, uns fortzubewegen und mal tief durchzuatmen?",
+      "urlLine": "statistik.bs.ch/quartierfarben",
+      "promoBlurb": "Basel ist klein und vielfältig: Wald, Wiesen und Wasser treffen auf Industrie, Verkehr und urbanes Leben. Auf der Webseite können Sie Ihre unmittelbare Nachbarschaft erkunden und als persönliche Postkarte herunterladen.",
+      "footerShort": "statistik.bs.ch"
     }
   },
   "map": {

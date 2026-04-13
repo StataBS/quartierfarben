@@ -5,7 +5,11 @@ https://github.com/d3/d3-hierarchy
 https://observablehq.com/@d3/treemap
  -->
 <script>
-  import { hierarchy, treemap as treemapLayout, treemapBinary } from "d3-hierarchy";
+  import {
+    hierarchy,
+    treemap as treemapLayout,
+    treemapBinary,
+  } from "d3-hierarchy";
   import { select } from "d3-selection";
   import { transition } from "d3-transition";
   import { geoMercator, geoPath, geoCircle } from "d3-geo";
@@ -23,6 +27,8 @@ https://observablehq.com/@d3/treemap
     showCoordinates,
   } from "$lib/stores.js";
   import { categories, postcardMargin } from "$lib/settings.js";
+  import { FONT_STACK_MONO } from "$lib/fontMono.js";
+  import { buildTreemapData } from "$lib/postcardTreemap.js";
 
   import geojson from "$lib/borders.js";
 
@@ -58,7 +64,7 @@ https://observablehq.com/@d3/treemap
 
   let appText = {};
   $: {
-    if ($lang === 'en') {
+    if ($lang === "en") {
       appText = en;
     } else {
       appText = de;
@@ -79,33 +85,7 @@ https://observablehq.com/@d3/treemap
 
   function dataUpdated(size) {
     if (!size) return;
-    const treeChildren = [];
-    Object.keys(categories).forEach((keyCategories) => {
-      const child = {};
-      child.name = categories[keyCategories].name;
-      child.children = [];
-
-      if (!size[keyCategories]) {
-        return;
-      }
-      // ignore small parts
-      if (Math.round(size[keyCategories].p) < 1) {
-        return;
-      }
-
-      child.children.push({
-        category: keyCategories,
-        label: categories[keyCategories][$lang == "de" ? "name" : "name_en"],
-        size: size[keyCategories]?.p || 0,
-        color: categories[keyCategories].color,
-      });
-
-      treeChildren.push(child);
-    });
-
-    const data = {
-      children: treeChildren,
-    };
+    const data = buildTreemapData(size, categories, $lang);
     redraw(data);
   }
 
@@ -118,10 +98,17 @@ https://observablehq.com/@d3/treemap
       $svg
         .append("text")
         .attr("class", "coordinates-text")
-        .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+        .attr(
+          "transform",
+          "translate(" +
+            width / 2 +
+            "," +
+            (height * 0.93 - postcardMargin) +
+            ")",
+        )
         .attr("text-anchor", "middle")
-        .attr("font-family", FONT_SANS)
-        .attr("font-size", 14)
+        .attr("font-family", FONT_STACK_MONO)
+        .attr("font-size", 13)
         .attr("fill", "#666666")
         .text(coordText);
     }
@@ -144,7 +131,7 @@ https://observablehq.com/@d3/treemap
       .text(function (d) {
         return d;
       });
-    
+
     // Update coordinates text
     $svg.selectAll(".coordinates-text").remove();
     if ($showCoordinates && $mapCenter) {
@@ -152,10 +139,17 @@ https://observablehq.com/@d3/treemap
       $svg
         .append("text")
         .attr("class", "coordinates-text")
-        .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+        .attr(
+          "transform",
+          "translate(" +
+            width / 2 +
+            "," +
+            (height * 0.93 - postcardMargin) +
+            ")",
+        )
         .attr("text-anchor", "middle")
-        .attr("font-family", FONT_SANS)
-        .attr("font-size", 14)
+        .attr("font-family", FONT_STACK_MONO)
+        .attr("font-size", 13)
         .attr("fill", "#666666")
         .text(coordText);
     }
@@ -177,7 +171,8 @@ https://observablehq.com/@d3/treemap
       .attr("class", "postcard inline " + ($isMobile ? "border" : ""))
       .attr("style", "print-color-adjust: exact;"); // preserve background when printing
 
-    const bg = $svg.append("rect")
+    const bg = $svg
+      .append("rect")
       .attr("x", 0)
       .attr("y", 0)
       .attr("width", width)
@@ -188,8 +183,7 @@ https://observablehq.com/@d3/treemap
       .tile(treemapBinary)
       .size([width - 2 * postcardMargin, height - 120])
       .round(true)
-      .paddingOuter(4)
-    ;
+      .paddingOuter(4);
 
     const root = hierarchy(data);
     treemap(root.sum(sumByCount));
@@ -198,9 +192,16 @@ https://observablehq.com/@d3/treemap
       .selectAll("g.cell")
       .data(root.leaves())
       .enter()
-      .append("g").attr("class","cell")
+      .append("g")
+      .attr("class", "cell")
       .attr("transform", function (d) {
-        return "translate(" + (d.x0 + postcardMargin) + "," + (d.y0 + postcardMargin) + ")";
+        return (
+          "translate(" +
+          (d.x0 + postcardMargin) +
+          "," +
+          (d.y0 + postcardMargin) +
+          ")"
+        );
       });
 
     $svg
@@ -209,11 +210,18 @@ https://observablehq.com/@d3/treemap
       .enter()
       .append("text")
       .attr("class", "title-text")
-      .attr("transform", "translate(" + width / 2 + "," + (height * TITLE_Y - postcardMargin) + ")")
+      .attr(
+        "transform",
+        "translate(" +
+          width / 2 +
+          "," +
+          (height * TITLE_Y - postcardMargin) +
+          ")",
+      )
       .attr("text-anchor", "middle")
-      .attr("font-family", FONT_SANS_BOLD)
-      .attr("font-weight", "700")
-      .attr("font-size", 30)
+      .attr("font-family", FONT_SANS)
+      .attr("font-weight", "400")
+      .attr("font-size", 28)
       .attr("fill", "#292929")
       .text(function (d) {
         return d;
@@ -224,10 +232,17 @@ https://observablehq.com/@d3/treemap
       $svg
         .append("text")
         .attr("class", "coordinates-text")
-        .attr("transform", "translate(" + width / 2 + "," + (height * 0.93 - postcardMargin) + ")")
+        .attr(
+          "transform",
+          "translate(" +
+            width / 2 +
+            "," +
+            (height * 0.93 - postcardMargin) +
+            ")",
+        )
         .attr("text-anchor", "middle")
-        .attr("font-family", FONT_SANS)
-        .attr("font-size", 14)
+        .attr("font-family", FONT_STACK_MONO)
+        .attr("font-size", 13)
         .attr("fill", "#666666")
         .text(coordText);
     }
@@ -247,11 +262,14 @@ https://observablehq.com/@d3/treemap
         return d.data.color; // color(d.parent.data.id);
       })
       .style("opacity", 0);
-      
-    rect.transition(t)
-      .style("opacity", 1);
-    
-    let titleFunc = d => d.data.label + ": " + (d.data.size < 2 ? d.data.size.toFixed(1) : Math.round(d.data.size)) + "%";
+
+    rect.transition(t).style("opacity", 1);
+
+    let titleFunc = (d) =>
+      d.data.label +
+      ": " +
+      (d.data.size < 2 ? d.data.size.toFixed(1) : Math.round(d.data.size)) +
+      "%";
     rect.append("title").text(titleFunc);
 
     let txt = cell
@@ -263,76 +281,78 @@ https://observablehq.com/@d3/treemap
         return d.y1 - d.y0 - 10;
       })
       .attr("text-anchor", "end")
-      .attr("font-family", FONT_SANS)
-      .attr("font-size", 12)
+      .attr("font-family", FONT_STACK_MONO)
+      .attr("font-size", 10)
       .text(function (d) {
         const w = d.x1 - d.x0;
         const h = d.y1 - d.y0;
-        if (w < 30 || h < 30) return;
+        if (w < 26 || h < 26) return;
         return Math.round(d.data.size).toString() + "%";
       })
       .attr("fill", function (d) {
         return "#000000";
       })
       .style("cursor", "default")
-      .style("opacity", 0)
+      .style("opacity", 0);
 
-    txt  
-      .transition(t)
-      .style("opacity", 1);
+    txt.transition(t).style("opacity", 1);
 
     txt.append("title").text(titleFunc);
 
     $svg
       .append("text")
-      .attr("transform", "translate(" + width / 2 + "," + (height * 0.95 - 0*postcardMargin) + ")")
+      .attr(
+        "transform",
+        "translate(" +
+          width / 2 +
+          "," +
+          (height * 0.95 - 0 * postcardMargin) +
+          ")",
+      )
       .attr("text-anchor", "middle")
       .attr("font-family", FONT_SANS_BOLD)
       .attr("font-size", 10)
       .attr("fill", "#2f2fa2")
       .text(appText.postcard.front.footer);
 
-      const mapWidth  = 60;   // in viewBox units
-      const mapHeight = 60;
-      const map = $svg.append("g").attr("class", "mini-map");
+    const mapWidth = 60; // in viewBox units
+    const mapHeight = 60;
+    const map = $svg.append("g").attr("class", "mini-map");
 
-      projection = geoMercator().fitSize([mapWidth, mapHeight], borders);
-      const path = geoPath().projection(projection);
+    projection = geoMercator().fitSize([mapWidth, mapHeight], borders);
+    const path = geoPath().projection(projection);
 
-      map
-        .selectAll("path")
-        .data(borders.features)
-        .enter()
-        .append("path")
-        .attr("d", path)
-        .attr("stroke", "#292929")
-        .attr("fill", "none")
-        .attr("stroke-width", 1.5)
-        .attr("stroke-opacity", 0.3).attr("vector-effect", "non-scaling-stroke");
+    map
+      .selectAll("path")
+      .data(borders.features)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .attr("stroke", "#000000")
+      .attr("fill", "none")
+      .attr("stroke-width", 0.65)
+      .attr("stroke-opacity", 1)
+      .attr("vector-effect", "non-scaling-stroke");
 
+    const radiusInDegrees = $circleRadius / 111320; // 1 degree ≈ 111,320 meters
+    const centerNums = [Number($mapCenter[0]), Number($mapCenter[1])];
+    const circle = geoCircle().center(centerNums).radius(radiusInDegrees);
+    map
+      .append("path")
+      .datum(circle())
+      .attr("d", path)
+      .attr("fill", "none")
+      .attr("stroke", "#000000")
+      .attr("stroke-width", 1.15)
+      .attr("stroke-opacity", 1)
+      .attr("vector-effect", "non-scaling-stroke");
 
-      const radiusInDegrees = $circleRadius / 111320; // 1 degree ≈ 111,320 meters
-      const centerNums = [
-        Number($mapCenter[0]),
-        Number($mapCenter[1]),
-      ];
-      const circle = geoCircle().center(centerNums).radius(radiusInDegrees);
-      map
-        .append("path")
-        .datum(circle())
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr("stroke", "#2f2fa2")
-        .attr("stroke-width", 2)
-        .attr("stroke-opacity", 0.8)
-        .attr("vector-effect", "non-scaling-stroke");
-
-      // Park in bottom-right, inside postcard margin
-      map.attr(
-        "transform",
-        `translate(${width - postcardMargin - mapWidth - 10},
-                   ${height - postcardMargin - mapHeight - 10})`
-      );
+    // Park in bottom-right, inside postcard margin
+    map.attr(
+      "transform",
+      `translate(${width - postcardMargin - mapWidth - 10},
+                   ${height - postcardMargin - mapHeight - 10})`,
+    );
   }
 
   function updateData(newData) {
@@ -390,8 +410,20 @@ https://observablehq.com/@d3/treemap
       .duration(1000)
       .style("opacity", 1);
   }
-
 </script>
+
+<div
+  class={$isMobile
+    ? "relative mx-[1.5rem] pt-[2rem] text-center sm:mx-[2rem]"
+    : "postcard-desktop border drop-shadow-xl"}
+  style={$screenWidth <= 500
+    ? $isMobile
+      ? `transform-origin: top left; transform:scale(${($screenWidth - mobileHorizontalInsetPx) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;`
+      : `transform-origin: top center; top: calc(50% - 3rem); transform: translateY(-50%) scale(${($screenWidth - mobileHorizontalInsetPx) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;`
+    : ""}
+>
+  <main class="w-full text-center" bind:this={visWrapper} />
+</div>
 
 <style>
   :global(svg.postcard) {
@@ -410,15 +442,3 @@ https://observablehq.com/@d3/treemap
     z-index: 25;
   }
 </style>
-
-<div
-  class={$isMobile ? "relative mx-[1.5rem] pt-[2rem] text-center sm:mx-[2rem]"
-                   : "postcard-desktop border drop-shadow-xl"}
-  style={$screenWidth <= 500
-    ? $isMobile
-      ? `transform-origin: top left; transform:scale(${($screenWidth - mobileHorizontalInsetPx) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;`
-      : `transform-origin: top center; top: calc(50% - 3rem); transform: translateY(-50%) scale(${($screenWidth - mobileHorizontalInsetPx) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;`
-    : ""}
->
-  <main class="w-full text-center" bind:this={visWrapper} />
-</div>

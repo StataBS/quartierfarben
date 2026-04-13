@@ -11,7 +11,6 @@
   import drawCanvasCircle from "$assets/scripts/drawCanvasCircle";
   import getLanduseSizes from "$assets/scripts/getLanduseSizes";
   import getCircleGeom from "$assets/scripts/getCircleGeom";
-  import checkCirleFits from "$assets/scripts/checkCirleFits";
   import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
   import baselBorders from "$lib/borders.js";
   import { circleLocationNeighbourhood } from "$lib/cityConfig.js";
@@ -45,7 +44,8 @@
     locationText,
     newBounds,
     isMobile,
-    lang
+    lang,
+    analysisMap,
   } from "$lib/stores.js";
 
   import en from "$locales/en.json";
@@ -160,16 +160,6 @@
       center: mC,
     });
 
-    let circleFits = checkCirleFits(map, polygonGeom);
-    if (!circleFits) {
-      const { width, height } = map.getContainer().getBoundingClientRect();
-      const ctx = canvas.getContext("2d");
-      canvas.width = width;
-      canvas.height = height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-
     const labelCfg = circleLocationNeighbourhood?.data?.features?.length
       ? circleLocationNeighbourhood
       : null;
@@ -216,7 +206,10 @@
       maxZoom: mapMaxZoom,
       center: initialMapCenter,
       zoom: initialMapZoom,
+      /** Allow reading pixels from the WebGL canvas for postcard “map disk” snapshots */
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
+    analysisMap.set(map);
 
     function resizeMap() {
       if (map) map.resize();
@@ -339,6 +332,7 @@
       window.removeEventListener("resize", onWindowResize);
       window.removeEventListener("hashchange", onHashChange);
       resizeObserver?.disconnect();
+      analysisMap.set(null);
       map?.remove();
     };
   });
