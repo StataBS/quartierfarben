@@ -18,12 +18,7 @@
     url,
     sidebarWidthLgPx
   } from "$lib/settings.js"
-  import {
-    lang,
-    isMobile,
-    screenWidth,
-    printBackUI,
-  } from "$lib/stores.js";
+  import { lang, isMobile, screenWidth } from "$lib/stores.js";
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
@@ -263,8 +258,7 @@
   </div>
 </section>
 
-{#if $printBackUI}
-  <span class="p-4 hidden">
-    <PostcardBack />
-  </span>
-{/if}
+<!-- Hidden off-screen: needed for kiosk (?kiosk) two-page print and back SVG download. -->
+<span class="p-4 hidden" aria-hidden="true">
+  <PostcardBack />
+</span>

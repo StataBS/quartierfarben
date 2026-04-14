@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { browser } from "$app/environment";
   import { svg, dimensions, lang, printBackUI } from "$lib/stores.js";
   import font from "$assets/scripts/font";
@@ -9,6 +9,8 @@
     preparePostcardBackForExport,
     encodeFrontSvgForExport,
     printTwoSvgsFromBase64,
+    createPrintTargetForUserGesture,
+    normalizePrintPaperFormat,
   } from "$lib/postcardExport.js";
 
   import en from "$locales/en.json";
@@ -20,11 +22,86 @@
     $printBackUI = !kiosk;
   }
 
+  const PRINT_PAPER_STORAGE = "quartierfarben-print-paper";
+
+  /** @type {'A5' | 'A4'} */
+  let printPaperSize = "A5";
+
   onMount(() => {
     syncPrintModeFromUrl();
+    if (browser) {
+      const saved = localStorage.getItem(PRINT_PAPER_STORAGE);
+      printPaperSize = normalizePrintPaperFormat(saved);
+    }
+    function onDocClick(/** @type {MouseEvent} */ e) {
+      if (!paperRootEl || !(e.target instanceof Node)) return;
+      if (!paperRootEl.contains(e.target)) closePaperMenu();
+    }
+    function onReposition() {
+      if (paperMenuOpen) positionPaperMenu();
+    }
+    document.addEventListener("click", onDocClick);
+    window.addEventListener("scroll", onReposition, true);
+    window.addEventListener("resize", onReposition);
     window.addEventListener("popstate", syncPrintModeFromUrl);
-    return () => window.removeEventListener("popstate", syncPrintModeFromUrl);
+    return () => {
+      document.removeEventListener("click", onDocClick);
+      window.removeEventListener("scroll", onReposition, true);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("popstate", syncPrintModeFromUrl);
+    };
   });
+
+  function persistPrintPaperSize() {
+    if (browser) {
+      localStorage.setItem(PRINT_PAPER_STORAGE, printPaperSize);
+    }
+  }
+
+  let paperMenuOpen = false;
+  /** @type {HTMLDivElement | undefined} */
+  let paperRootEl;
+  /** @type {HTMLButtonElement | undefined} */
+  let paperTriggerEl;
+  let paperMenuTop = 0;
+  let paperMenuLeft = 0;
+  let paperMenuWidth = 280;
+
+  function closePaperMenu() {
+    paperMenuOpen = false;
+  }
+
+  /** @param {'A5' | 'A4'} code */
+  function pickPaperSize(code) {
+    printPaperSize = code;
+    persistPrintPaperSize();
+    closePaperMenu();
+  }
+
+  /** @param {KeyboardEvent} e */
+  function onPaperMenuKeydown(e) {
+    if (e.key === "Escape") closePaperMenu();
+  }
+
+  async function positionPaperMenu() {
+    await tick();
+    if (!paperMenuOpen || !paperTriggerEl || typeof window === "undefined") return;
+    const r = paperTriggerEl.getBoundingClientRect();
+    const pad = 6;
+    const w = Math.max(r.width, 220);
+    paperMenuWidth = w;
+    paperMenuTop = r.bottom + pad;
+    let left = r.right - w;
+    if (left < 8) left = 8;
+    if (left + w > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - w - 8);
+    }
+    paperMenuLeft = left;
+  }
+
+  $: if (paperMenuOpen) {
+    positionPaperMenu();
+  }
 
   let appText = {};
   $: {
@@ -34,6 +111,11 @@
       appText = de;
     }
   }
+
+  $: selectedPaperLabel =
+    printPaperSize === "A4"
+      ? appText.print?.optionA4 ?? "A4"
+      : appText.print?.optionA5 ?? "A5";
 
   const width = $dimensions[0];
   const height = $dimensions[1];
@@ -183,16 +265,121 @@
       downloadSVG($svg);
       return;
     }
-    await preparePostcardBackForExport();
-    const frontB64 = encodeFrontSvgForExport($svg);
-    const backEl = document.getElementById("postcardBack");
-    const backB64 = encode(backEl.outerHTML);
-    await printTwoSvgsFromBase64(frontB64, backB64);
+    const syncPrintTarget = createPrintTargetForUserGesture();
+    if (!syncPrintTarget) {
+      return;
+    }
+    let frontB64;
+    let backB64;
+    try {
+      await preparePostcardBackForExport();
+      frontB64 = encodeFrontSvgForExport($svg);
+      const backEl = document.getElementById("postcardBack");
+      if (!backEl) {
+        syncPrintTarget.dispose();
+        return;
+      }
+      backB64 = encode(backEl.outerHTML);
+    } catch {
+      syncPrintTarget.dispose();
+      return;
+    }
+    await printTwoSvgsFromBase64(
+      frontB64,
+      backB64,
+      syncPrintTarget,
+      normalizePrintPaperFormat(printPaperSize),
+    );
   }
 </script>
 
+<svelte:window on:keydown={onPaperMenuKeydown} />
+
 <!-- Kanton BS symbol: designsystem/dist/assets/symbols/download.svg -->
 <div class="flex w-full flex-col gap-[1.25rem]">
+  {#if !$printBackUI}
+    <div class="relative z-30 w-full min-w-0" bind:this={paperRootEl}>
+      <button
+        bind:this={paperTriggerEl}
+        type="button"
+        class="print-paper-trigger group/pp button w-full max-w-none shrink-0 justify-between gap-2 text-left"
+        data-open={paperMenuOpen ? "true" : undefined}
+        aria-expanded={paperMenuOpen}
+        aria-haspopup="listbox"
+        aria-label={appText.print.paperLabel}
+        on:click|stopPropagation={() => (paperMenuOpen = !paperMenuOpen)}
+      >
+        <span class="flex min-w-0 flex-1 items-center gap-2">
+          <svg
+            class="print-paper-icon origin-center shrink-0 group-hover/pp:animate-[ds-icon-pop_0.45s_ease]"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          <span class="min-w-0 truncate">{selectedPaperLabel}</span>
+        </span>
+        <svg
+          class="print-paper-chevron shrink-0 transition-transform duration-150"
+          class:print-paper-chevron--open={paperMenuOpen}
+          width="18"
+          height="18"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </button>
+
+      {#if paperMenuOpen}
+        <ul
+          class="fixed z-[200] list-none space-y-5 overflow-hidden rounded-lg border border-gray-200 bg-white p-6 shadow-[0_4px_24px_rgba(15,23,42,0.1),0_2px_8px_rgba(15,23,42,0.06)] sm:space-y-6 sm:p-7"
+          style="top: {paperMenuTop}px; left: {paperMenuLeft}px; width: {paperMenuWidth}px;"
+          role="listbox"
+          aria-label={appText.print.paperLabel}
+        >
+          <li role="option" aria-selected={printPaperSize === "A5"}>
+            <button
+              type="button"
+              class="w-full rounded-md px-5 py-5 text-left text-base transition-colors duration-150 hover:bg-purple-50 hover:!text-purple-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 lg:text-[18px] {printPaperSize === 'A5'
+                ? 'font-bold text-blue-900'
+                : 'font-normal text-gray-600'}"
+              on:click={() => pickPaperSize("A5")}
+            >
+              {appText.print.optionA5}
+            </button>
+          </li>
+          <li role="option" aria-selected={printPaperSize === "A4"}>
+            <button
+              type="button"
+              class="w-full rounded-md px-5 py-5 text-left text-base transition-colors duration-150 hover:bg-purple-50 hover:!text-purple-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 lg:text-[18px] {printPaperSize === 'A4'
+                ? 'font-bold text-blue-900'
+                : 'font-normal text-gray-600'}"
+              on:click={() => pickPaperSize("A4")}
+            >
+              {appText.print.optionA4}
+            </button>
+          </li>
+        </ul>
+      {/if}
+    </div>
+  {/if}
+
   <button
     type="button"
     on:click={printOrDownloadFront}
@@ -240,6 +427,12 @@
     >
   </button>
 
+  {#if !$printBackUI}
+    <p class="m-0 text-sm leading-snug text-gray-700" role="note">
+      {appText.print.hint}
+    </p>
+  {/if}
+
   {#if $printBackUI}
     <button
       type="button"
@@ -266,3 +459,46 @@
     </button>
   {/if}
 </div>
+
+<style>
+  /* Same footprint as primary `.button` (Drucken); open state like other DDS dropdowns. */
+  .print-paper-trigger {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  :global(button.print-paper-trigger.button[data-open="true"]) {
+    --button-bg: theme("colors.purple.100");
+    --button-border: theme("colors.purple.600");
+    --button-text: theme("colors.purple.900");
+  }
+
+  :global(button.print-paper-trigger.button[data-open="true"]:hover),
+  :global(button.print-paper-trigger.button[data-open="true"]:focus-visible) {
+    --button-text: theme("colors.purple.900");
+  }
+
+  :global(button.print-paper-trigger.button) .print-paper-chevron {
+    display: block;
+    width: 18px;
+    height: 18px;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    color: inherit;
+    opacity: 1;
+  }
+
+  .print-paper-chevron--open {
+    transform: rotate(180deg);
+  }
+
+  :global(button.print-paper-trigger.button) .print-paper-icon {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .print-paper-icon {
+    flex-shrink: 0;
+  }
+</style>

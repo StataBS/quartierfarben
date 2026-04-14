@@ -50,6 +50,12 @@
     "downloadBack": "Download backside",
     "printFront": "Print"
   },
+  "print": {
+    "paperLabel": "Paper size",
+    "optionA5": "A5",
+    "optionA4": "A4",
+    "hint": "In the print dialog, choose the same paper size and portrait orientation."
+  },
   "postcard": {
     "front": {
       "title": "Your text here",

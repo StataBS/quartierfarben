@@ -49,6 +49,12 @@
     "downloadBack": "Rückseite herunterladen",
     "printFront": "Drucken"
   },
+  "print": {
+    "paperLabel": "Papierformat",
+    "optionA5": "A5",
+    "optionA4": "A4",
+    "hint": "Im Druckdialog dasselbe Papierformat und Hochformat wählen."
+  },
   "postcard": {
     "front": {
       "title": "Ihr Text hier",
