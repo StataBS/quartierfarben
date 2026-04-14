@@ -209,7 +209,7 @@
 
       <!-- Desktop: postcard text + coordinates, then download buttons -->
       <div
-        class="hidden w-full min-w-0 lg:mt-[4rem] lg:flex lg:flex-col lg:gap-[3.5rem]"
+        class="hidden w-full min-w-0 lg:mt-[2rem] lg:flex lg:flex-col lg:gap-[1.75rem]"
       >
         <div class="flex w-full min-w-0 flex-col lg:gap-[1.5rem]">
           <PostcardTextInput />
@@ -218,7 +218,7 @@
         <PrintAndDownload />
       </div>
 
-      <div class="hidden w-full min-w-0 lg:mt-[96px] lg:block">
+      <div class="hidden w-full min-w-0 lg:mt-[10rem] lg:block">
         <SiteFooter />
       </div>
     </div>
@@ -244,14 +244,14 @@
   {/if}
   {#if $isMobile}
     <div
-      class="max-lg:order-5 flex flex-col gap-[1.5rem] bg-white px-[1.5rem] pb-[2.75rem] pt-6 sm:px-[2rem] sm:pt-8"
+      class="max-lg:order-5 flex flex-col gap-[1.5rem] bg-white px-[1.5rem] pb-10 pt-6 sm:px-[2rem] sm:pt-8"
     >
       <PostcardTextInput />
       <ShowCoordinatesToggle />
     </div>
   {/if}
   <div
-    class="z-10 flex w-full max-lg:order-6 flex-col gap-y-[5.5rem] overflow-auto bg-white px-[1.5rem] pt-[2.75rem] pb-8 sm:px-[2rem] sm:pt-10 sm:pb-9 lg:hidden"
+    class="z-10 flex w-full max-lg:order-6 flex-col gap-y-[5.5rem] overflow-auto bg-white px-[1.5rem] pt-10 pb-8 sm:px-[2rem] sm:pt-9 sm:pb-9 lg:hidden"
   >
     <PrintAndDownload />
     <SiteFooter />
