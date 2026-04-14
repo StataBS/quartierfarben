@@ -1,4 +1,5 @@
 <script>
+  import { base } from "$app/paths";
   import { browser } from "$app/environment";
   import { dimensions, areaSizes, lang, postcardBackMapDiskReady } from "$lib/stores.js";
   import { categories } from "$lib/settings";
@@ -156,7 +157,7 @@
 
   <!-- Logo: top-left, slightly smaller and shifted up -->
   <image
-    href="/Stat_Amt_Logo.svg"
+    href="{base}/Stat_Amt_Logo.svg"
     x="0"
     y="-8"
     width="142"
@@ -285,7 +286,7 @@
 
   <!-- QR: 7 mm right of center vertical, 15×15 mm, 3 mm from bottom -->
   <image
-    href="/qr.png"
+    href="{base}/qr.png"
     x={QR_X}
     y={QR_Y}
     width={QR_SIZE}
