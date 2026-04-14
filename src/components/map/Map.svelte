@@ -25,9 +25,7 @@
     analysisRadiusInMeters
   } from "$lib/settings.js";
   import {
-    getViewportCenterLngLat,
-    zoomInAroundAnalysisFocal,
-    zoomOutAroundAnalysisFocal
+    getViewportCenterLngLat
   } from "$lib/geo/viewportAnalysisCenter.js";
   import {
     parseAnalysisHash,
@@ -107,6 +105,42 @@
     return nearest;
   }
 
+  function getNearestCoordinateByDistance(pointCoords, coordinates) {
+    let nearest = null;
+    let minDistanceSq = Number.POSITIVE_INFINITY;
+
+    for (const [lng, lat] of coordinates) {
+      const dx = pointCoords[0] - lng;
+      const dy = pointCoords[1] - lat;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq < minDistanceSq) {
+        minDistanceSq = distanceSq;
+        nearest = [lng, lat];
+      }
+    }
+    return nearest;
+  }
+
+  function clampAnalysisPointToBasel(pointCoords) {
+    const centerPoint = {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: pointCoords }
+    };
+    if (isPointInFeatureCollection(centerPoint, baselBoundary)) {
+      return pointCoords;
+    }
+
+    const nearestFeature = getNearestFeatureByDistance(pointCoords, baselBoundary.features);
+    const nearestCoord = nearestFeature
+      ? getNearestCoordinateByDistance(pointCoords, getFeatureCoordinates(nearestFeature))
+      : null;
+    return nearestCoord ?? initialMapCenter;
+  }
+
+  function isSamePoint(a, b, epsilon = 1e-9) {
+    return Math.abs(a[0] - b[0]) < epsilon && Math.abs(a[1] - b[1]) < epsilon;
+  }
+
   /** @param {string} id */
   function basemapStoreIdToLayerId(id) {
     if (id === "none") return null;
@@ -134,6 +168,50 @@
     } else {
       map.scrollZoom.enable();
     }
+  }
+
+  function getClampedZoom(zoom) {
+    return Math.min(mapMaxZoom, Math.max(mapMinZoom, zoom));
+  }
+
+  function jumpToClampedAnalysisView(nextView = {}) {
+    if (!map) return;
+    const center = nextView.center ?? getViewportCenterLngLat(map);
+    const zoom = nextView.zoom ?? map.getZoom();
+    map.jumpTo({
+      center: clampAnalysisPointToBasel(center),
+      zoom: getClampedZoom(zoom),
+      duration: 0,
+    });
+  }
+
+  function keepAnalysisPointInsideBasel() {
+    if (!map) return false;
+    const currentAnalysisPoint = getViewportCenterLngLat(map);
+    const clampedAnalysisPoint = clampAnalysisPointToBasel(currentAnalysisPoint);
+    if (isSamePoint(currentAnalysisPoint, clampedAnalysisPoint)) return false;
+    map.jumpTo({ center: clampedAnalysisPoint, zoom: getClampedZoom(map.getZoom()), duration: 0 });
+    return true;
+  }
+
+  function zoomInWithinBasel() {
+    if (!map) return;
+    const currentAnalysisPoint = getViewportCenterLngLat(map);
+    const clampedAnalysisPoint = clampAnalysisPointToBasel(currentAnalysisPoint);
+    if (!isSamePoint(currentAnalysisPoint, clampedAnalysisPoint)) {
+      map.jumpTo({ center: clampedAnalysisPoint, zoom: getClampedZoom(map.getZoom()), duration: 0 });
+    }
+    map.zoomIn({ around: clampedAnalysisPoint, duration: 200 });
+  }
+
+  function zoomOutWithinBasel() {
+    if (!map) return;
+    const currentAnalysisPoint = getViewportCenterLngLat(map);
+    const clampedAnalysisPoint = clampAnalysisPointToBasel(currentAnalysisPoint);
+    if (!isSamePoint(currentAnalysisPoint, clampedAnalysisPoint)) {
+      map.jumpTo({ center: clampedAnalysisPoint, zoom: getClampedZoom(map.getZoom()), duration: 0 });
+    }
+    map.zoomOut({ around: clampedAnalysisPoint, duration: 200 });
   }
 
   $: applyBasemapVisibility($basemapId);
@@ -257,7 +335,7 @@
       const parsed = parseAnalysisHash(window.location.hash);
       if (!parsed) return;
       blockAnalysisHashSync = false;
-      map.jumpTo({ zoom: parsed.zoom, center: [parsed.lng, parsed.lat], duration: 0 });
+      jumpToClampedAnalysisView({ zoom: parsed.zoom, center: [parsed.lng, parsed.lat] });
       requestAnimationFrame(() => {
         resizeMap();
         drawAndCount(map);
@@ -292,7 +370,9 @@
       function finishCircleViewportAlign() {
         const parsed = parseAnalysisHash(window.location.hash);
         if (parsed) {
-          map.jumpTo({ zoom: parsed.zoom, center: [parsed.lng, parsed.lat], duration: 0 });
+          jumpToClampedAnalysisView({ zoom: parsed.zoom, center: [parsed.lng, parsed.lat] });
+        } else {
+          jumpToClampedAnalysisView();
         }
         resizeMap();
         requestAnimationFrame(() => {
@@ -315,12 +395,14 @@
       });
 
       map.on("moveend", function () {
+        keepAnalysisPointInsideBasel();
         const canvas = document.getElementById("myCanvas");
         drawCanvasCircle(map, canvas, $circleRadius);
         scheduleLanduseRecompute(100);
       });
 
       map.on("zoomend", function () {
+        keepAnalysisPointInsideBasel();
         const canvas = document.getElementById("myCanvas");
         drawCanvasCircle(map, canvas, $circleRadius);
         scheduleLanduseRecompute(100);
@@ -359,8 +441,8 @@
     <button
       type="button"
       class="button is-strong is-icon-only drop-shadow-xl"
-      on:click={() => map && zoomInAroundAnalysisFocal(map)}
-      on:keypress={() => map && zoomInAroundAnalysisFocal(map)}
+      on:click={zoomInWithinBasel}
+      on:keypress={zoomInWithinBasel}
       aria-label="Zoom in"
     >
       <svg
@@ -379,8 +461,8 @@
     <button
       type="button"
       class="button is-strong is-icon-only drop-shadow-xl"
-      on:click={() => map && zoomOutAroundAnalysisFocal(map)}
-      on:keypress={() => map && zoomOutAroundAnalysisFocal(map)}
+      on:click={zoomOutWithinBasel}
+      on:keypress={zoomOutWithinBasel}
       aria-label="Zoom out"
     >
       <svg
