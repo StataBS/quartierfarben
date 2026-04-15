@@ -32,12 +32,37 @@ https://observablehq.com/@d3/treemap
 
   import geojson from "$lib/borders.js";
 
-  /** Match DDS body / postcard export readability */
-  const FONT_SANS = 'Inter, "Inter Fallback", system-ui, sans-serif';
+  /** Front title should match legend / numeric mono style. */
+  const FONT_SANS = FONT_STACK_MONO;
   const FONT_SANS_BOLD = 'Inter, "Inter Fallback", system-ui, sans-serif';
 
   /** Title line (viewBox y); higher = more room for coords + mini-map below */
   const TITLE_Y = 0.855;
+  /** Front title base size (one step smaller than before). */
+  const TITLE_FONT_SIZE = 27;
+  const TITLE_FONT_MIN = 14;
+  const TITLE_HORIZONTAL_PADDING = 36;
+
+  /**
+   * Shrinks title text until it fits in the available width.
+   * @param {import("d3-selection").Selection<SVGTextElement, string, SVGSVGElement, unknown>} selection
+   */
+  function fitTitleTextSelection(selection) {
+    selection.each(function (d) {
+      const node = this;
+      if (!node) return;
+      node.setAttribute("font-size", String(TITLE_FONT_SIZE));
+      if (!d || !String(d).trim()) return;
+      let size = TITLE_FONT_SIZE;
+      while (
+        size > TITLE_FONT_MIN &&
+        node.getComputedTextLength() > width - TITLE_HORIZONTAL_PADDING
+      ) {
+        size -= 0.5;
+        node.setAttribute("font-size", String(size));
+      }
+    });
+  }
 
   /** WGS84 degrees on postcard (5 digits after decimal point). */
   function formatCoordForLabel(value) {
@@ -125,12 +150,13 @@ https://observablehq.com/@d3/treemap
       return;
     }
 
-    $svg
+    const titleSelection = $svg
       .selectAll(".title-text")
       .data([resolveTitleText(customText, autoText)])
       .text(function (d) {
         return d;
       });
+    fitTitleTextSelection(titleSelection);
 
     // Update coordinates text
     $svg.selectAll(".coordinates-text").remove();
@@ -221,11 +247,12 @@ https://observablehq.com/@d3/treemap
       .attr("text-anchor", "middle")
       .attr("font-family", FONT_SANS)
       .attr("font-weight", "400")
-      .attr("font-size", 28)
+      .attr("font-size", TITLE_FONT_SIZE)
       .attr("fill", "#292929")
       .text(function (d) {
         return d;
       });
+    fitTitleTextSelection($svg.selectAll(".title-text"));
 
     if ($showCoordinates && $mapCenter) {
       const coordText = coordinatesLineText($mapCenter);

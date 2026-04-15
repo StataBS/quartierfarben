@@ -23,15 +23,21 @@
   }
 
   const PRINT_PAPER_STORAGE = "quartierfarben-print-paper";
+  const PRINT_BACK_OFFSET_X_STORAGE = "quartierfarben-print-back-offset-x-mm";
+  const PRINT_BACK_OFFSET_Y_STORAGE = "quartierfarben-print-back-offset-y-mm";
 
   /** @type {'A5' | 'A4'} */
   let printPaperSize = "A5";
+  let backOffsetXmm = 0;
+  let backOffsetYmm = 0;
 
   onMount(() => {
     syncPrintModeFromUrl();
     if (browser) {
       const saved = localStorage.getItem(PRINT_PAPER_STORAGE);
       printPaperSize = normalizePrintPaperFormat(saved);
+      backOffsetXmm = Number(localStorage.getItem(PRINT_BACK_OFFSET_X_STORAGE) ?? 0) || 0;
+      backOffsetYmm = Number(localStorage.getItem(PRINT_BACK_OFFSET_Y_STORAGE) ?? 0) || 0;
     }
     function onDocClick(/** @type {MouseEvent} */ e) {
       if (!paperRootEl || !(e.target instanceof Node)) return;
@@ -56,6 +62,34 @@
     if (browser) {
       localStorage.setItem(PRINT_PAPER_STORAGE, printPaperSize);
     }
+  }
+
+  function clampBackOffsetMm(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(-20, Math.min(20, n));
+  }
+
+  function persistBackOffsetX() {
+    backOffsetXmm = clampBackOffsetMm(backOffsetXmm);
+    if (browser) {
+      localStorage.setItem(PRINT_BACK_OFFSET_X_STORAGE, String(backOffsetXmm));
+    }
+  }
+
+  function persistBackOffsetY() {
+    backOffsetYmm = clampBackOffsetMm(backOffsetYmm);
+    if (browser) {
+      localStorage.setItem(PRINT_BACK_OFFSET_Y_STORAGE, String(backOffsetYmm));
+    }
+  }
+
+  function formatDirectionalMm(value, negativeWord, positiveWord) {
+    const n = clampBackOffsetMm(value);
+    const abs = Math.abs(n);
+    const mm = Number.isInteger(abs) ? String(abs) : abs.toFixed(1);
+    if (n === 0) return `0 mm`;
+    return `${mm} mm ${n < 0 ? negativeWord : positiveWord}`;
   }
 
   let paperMenuOpen = false;
@@ -289,6 +323,8 @@
       backB64,
       syncPrintTarget,
       normalizePrintPaperFormat(printPaperSize),
+      clampBackOffsetMm(backOffsetXmm),
+      clampBackOffsetMm(backOffsetYmm),
     );
   }
 </script>
@@ -431,6 +467,53 @@
     <p class="m-0 text-sm leading-snug text-gray-700" role="note">
       {appText.print.hint}
     </p>
+    <div class="flex w-full flex-col gap-2">
+      <p class="m-0 text-sm leading-snug text-gray-700" role="note">
+        {appText.print.calibrationIntro}
+      </p>
+      <div class="grid w-full grid-cols-2 gap-2">
+        <label class="flex flex-col gap-1 text-sm text-gray-800">
+          <span>{appText.print.calibrationX}</span>
+          <input
+            type="number"
+            step="0.5"
+            min="-20"
+            max="20"
+            inputmode="decimal"
+            bind:value={backOffsetXmm}
+            on:change={persistBackOffsetX}
+            class="input w-full"
+          />
+          <span class="text-xs text-gray-600">
+            {formatDirectionalMm(
+              backOffsetXmm,
+              $lang === "en" ? "left" : "links",
+              $lang === "en" ? "right" : "rechts",
+            )}
+          </span>
+        </label>
+        <label class="flex flex-col gap-1 text-sm text-gray-800">
+          <span>{appText.print.calibrationY}</span>
+          <input
+            type="number"
+            step="0.5"
+            min="-20"
+            max="20"
+            inputmode="decimal"
+            bind:value={backOffsetYmm}
+            on:change={persistBackOffsetY}
+            class="input w-full"
+          />
+          <span class="text-xs text-gray-600">
+            {formatDirectionalMm(
+              backOffsetYmm,
+              $lang === "en" ? "up" : "oben",
+              $lang === "en" ? "down" : "unten",
+            )}
+          </span>
+        </label>
+      </div>
+    </div>
   {/if}
 
   {#if $printBackUI}

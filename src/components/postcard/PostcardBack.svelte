@@ -45,9 +45,9 @@
   const LEFT_TEXT_X = xMm(4);
   const LEFT_TEXT_W = xMm(62);
   const LEFT_TEXT_Y = yMm(71);
-  /** Tighter headline column + gap before legend (font-size unchanged; line-height squishes) */
+  /** Tighter headline column + slightly smaller gap before legend (legend sits a bit higher). */
   const HEADLINE_BOX_H = yMm(13);
-  const HEADLINE_LEGEND_GAP = yMm(4);
+  const HEADLINE_LEGEND_GAP = yMm(2.5);
   const LEGEND_TOP = LEFT_TEXT_Y + HEADLINE_BOX_H + HEADLINE_LEGEND_GAP;
   /** Legend fills to bottom of card — row height derived from remaining space */
   const LEGEND_H = VB_H - LEGEND_TOP;
@@ -99,6 +99,9 @@
   $: legendRowCount = Math.max(leftColumn.length, rightColumn.length);
   $: legendRowH =
     legendRowCount > 0 ? LEGEND_H / legendRowCount : LEGEND_H;
+  /** Slightly tighter row step so bigger labels can still fit. */
+  const LEGEND_ROW_COMPACT = 0.86;
+  $: legendRowStep = legendRowH * LEGEND_ROW_COMPACT;
 
   let pieGroup;
   let diskDebounce;
@@ -138,9 +141,9 @@
   <!-- Vertical center -->
   <line
     x1={MID_X}
-    y1="0"
+    y1={yMm(5)}
     x2={MID_X}
-    y2={VB_H}
+    y2={VB_H - yMm(3)}
     stroke="#292929"
     stroke-width="0.55"
   />
@@ -155,13 +158,13 @@
     stroke-width="0.75"
   />
 
-  <!-- Logo: top-left, slightly smaller and shifted up -->
+  <!-- Logo: top-left, slightly larger and shifted up -->
   <image
     href="{base}/Stat_Amt_Logo.svg"
     x="0"
-    y="-8"
-    width="142"
-    height="71"
+    y="-9"
+    width="150"
+    height="75"
     preserveAspectRatio="xMidYMid meet"
   />
 
@@ -199,48 +202,48 @@
     </div>
   </foreignObject>
 
-  <!-- Legend: bottom 20 mm, 4 mm left; second column from 36 mm; swatch + label vertically centered per row -->
+  <!-- Legend: larger swatches + labels, positioned slightly higher -->
   <g transform="translate({LEFT_TEXT_X}, {LEGEND_TOP})">
     {#each leftColumn as { color, name, name_en }, i}
-      {@const cy = i * legendRowH + legendRowH / 2}
-      {@const sh = Math.min(8, legendRowH * 0.38)}
+      {@const cy = i * legendRowStep + legendRowStep / 2}
+      {@const sh = Math.min(12, legendRowStep * 0.58)}
       <rect
         x="0"
         y={cy - sh / 2}
-        width="16"
+        width="20"
         height={sh}
         rx="1"
         fill={color}
       />
       <text
-        x="20"
+        x="25"
         y={cy}
         text-anchor="start"
         dominant-baseline="middle"
         font-family={LEGEND_MONO}
-        font-size="6.5"
+        font-size="8.4"
         fill="#292929">{$lang == "en" ? name_en : name}</text
       >
     {/each}
 
     {#each rightColumn as { color, name, name_en }, i}
-      {@const cy = i * legendRowH + legendRowH / 2}
-      {@const sh = Math.min(8, legendRowH * 0.38)}
+      {@const cy = i * legendRowStep + legendRowStep / 2}
+      {@const sh = Math.min(12, legendRowStep * 0.58)}
       <rect
         x={LEGEND_COL2_X}
         y={cy - sh / 2}
-        width="16"
+        width="20"
         height={sh}
         rx="1"
         fill={color}
       />
       <text
-        x={LEGEND_COL2_X + 20}
+        x={LEGEND_COL2_X + 25}
         y={cy}
         text-anchor="start"
         dominant-baseline="middle"
         font-family={LEGEND_MONO}
-        font-size="6.5"
+        font-size="8.4"
         fill="#292929">{$lang == "en" ? name_en : name}</text
       >
     {/each}
@@ -303,7 +306,7 @@
       <div style="font-size:8.5px;font-weight:600;line-height:1.2;">
         {appText.postcard.back.urlLine}
       </div>
-      <div style="font-size:6.5px;line-height:1.35;max-width:100%;">
+      <div style="font-size:7.3px;line-height:1.35;max-width:100%;">
         {appText.postcard.back.promoBlurb}
       </div>
     </div>

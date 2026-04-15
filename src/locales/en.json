@@ -54,7 +54,10 @@
     "paperLabel": "Paper size",
     "optionA5": "A5",
     "optionA4": "A4",
-    "hint": "In the print dialog, choose the same paper size and portrait orientation."
+    "hint": "In the print dialog, choose the same paper size and portrait orientation.",
+    "calibrationIntro": "Here you can fine-tune the back side in millimetres if front and back do not align exactly.",
+    "calibrationX": "Offset X",
+    "calibrationY": "Offset Y"
   },
   "postcard": {
     "front": {

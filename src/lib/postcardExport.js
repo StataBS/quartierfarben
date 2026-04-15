@@ -133,6 +133,16 @@ export function normalizePrintPaperFormat(v) {
   return v === "A4" ? "A4" : "A5";
 }
 
+/**
+ * @param {unknown} value
+ * @returns {number}
+ */
+function normalizePrintOffsetMm(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-20, Math.min(20, n));
+}
+
 /** Cut guide: outline so the 105×148 mm card is not shrunk by a border. */
 const CUT_BORDER_BLOCK = `
         .postcard-cut-border--front,
@@ -163,7 +173,7 @@ const CUT_BORDER_BLOCK = `
         }
         .postcard-back-rotated {
           flex: 0 0 auto;
-          transform: rotate(90deg);
+          transform: rotate(270deg);
           transform-origin: center center;
         }
         .postcard-back-rotated svg {
@@ -199,10 +209,20 @@ function buildPrintStylesheet(format) {
  * @param {string} frontMarkup
  * @param {string} backMarkup
  * @param {PrintPaperFormat} [paperFormat]
+ * @param {number} [backOffsetXmm]
+ * @param {number} [backOffsetYmm]
  */
-function buildTwoPagePostcardPrintHtml(frontMarkup, backMarkup, paperFormat = "A5") {
+function buildTwoPagePostcardPrintHtml(
+  frontMarkup,
+  backMarkup,
+  paperFormat = "A5",
+  backOffsetXmm = 0,
+  backOffsetYmm = 0,
+) {
   const f = normalizePrintPaperFormat(paperFormat);
   const sheet = buildPrintStylesheet(f);
+  const offsetX = normalizePrintOffsetMm(backOffsetXmm);
+  const offsetY = normalizePrintOffsetMm(backOffsetYmm);
   return (
     `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Postkarte</title>` +
     `<style>
@@ -233,9 +253,12 @@ function buildTwoPagePostcardPrintHtml(frontMarkup, backMarkup, paperFormat = "A
           align-items: center;
           justify-content: center;
         }
-      </style></head><body data-paper="${f.toLowerCase()}">
+        .postcard-back-offset {
+          transform: translate(var(--back-offset-x), var(--back-offset-y));
+        }
+      </style></head><body data-paper="${f.toLowerCase()}" style="--back-offset-x:${offsetX}mm;--back-offset-y:${offsetY}mm;">
         <section class="print-page"><div class="postcard-front-wrap"><div class="postcard-cut-border postcard-cut-border--front">${frontMarkup}</div></div></section>
-        <section class="print-page"><div class="postcard-back-wrap"><div class="postcard-cut-border postcard-cut-border--back-shell"><div class="postcard-back-rotated">${backMarkup}</div></div></div></section>
+        <section class="print-page"><div class="postcard-back-wrap"><div class="postcard-cut-border postcard-cut-border--back-shell postcard-back-offset"><div class="postcard-back-rotated">${backMarkup}</div></div></div></section>
       </body></html>`
   );
 }
@@ -246,8 +269,17 @@ function buildTwoPagePostcardPrintHtml(frontMarkup, backMarkup, paperFormat = "A
  * @param {string} backB64
  * @param {{ contentWindow: Window, dispose: () => void } | null} [syncPrintTarget] from {@link createPrintTargetForUserGesture} (same click turn as the button)
  * @param {PrintPaperFormat} [paperFormat] A5 or A4 portrait; postcard centred on the sheet
+ * @param {number} [backOffsetXmm] manual duplex registration correction in mm
+ * @param {number} [backOffsetYmm] manual duplex registration correction in mm
  */
-export function printTwoSvgsFromBase64(frontB64, backB64, syncPrintTarget, paperFormat) {
+export function printTwoSvgsFromBase64(
+  frontB64,
+  backB64,
+  syncPrintTarget,
+  paperFormat,
+  backOffsetXmm = 0,
+  backOffsetYmm = 0,
+) {
   return new Promise((resolve, reject) => {
     function decodeSvgMarkup(b64) {
       const dataUrl = "data:image/svg+xml;base64,\n" + b64;
@@ -261,6 +293,8 @@ export function printTwoSvgsFromBase64(frontB64, backB64, syncPrintTarget, paper
       frontMarkup,
       backMarkup,
       normalizePrintPaperFormat(paperFormat),
+      backOffsetXmm,
+      backOffsetYmm,
     );
 
     const isFirefox = /firefox/i.test(navigator.userAgent);

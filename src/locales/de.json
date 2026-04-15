@@ -53,7 +53,10 @@
     "paperLabel": "Papierformat",
     "optionA5": "A5",
     "optionA4": "A4",
-    "hint": "Im Druckdialog dasselbe Papierformat und Hochformat wählen."
+    "hint": "Im Druckdialog dasselbe Papierformat und Hochformat wählen.",
+    "calibrationIntro": "Hier können Sie die Rückseite in Millimetern nachjustieren, falls Vorder- und Rückseite nicht exakt übereinander liegen.",
+    "calibrationX": "Korrektur X",
+    "calibrationY": "Korrektur Y"
   },
   "postcard": {
     "front": {
