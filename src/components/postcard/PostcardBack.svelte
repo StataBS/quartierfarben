@@ -162,9 +162,9 @@
   <image
     href="{base}/Stat_Amt_Logo.svg"
     x="0"
-    y="-9"
-    width="150"
-    height="75"
+    y="-11"
+    width="171"
+    height="85.5"
     preserveAspectRatio="xMidYMid meet"
   />
 
