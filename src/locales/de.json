@@ -31,7 +31,7 @@
     "copyright": "© {year} Basel-Stadt"
   },
   "inputs": {
-    "searchLabel": "Nach einem Ort in Basel-Stadt suchen",
+    "searchLabel": "Nach einer Adresse in Basel-Stadt suchen:",
     "searchPlaceholder": "Suche",
     "noSearchResults": "Keine Suchergebnisse",
     "wahlkreis": "Wahlkreis",

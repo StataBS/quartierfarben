@@ -32,7 +32,7 @@
     "copyright": "© {year} Basel-Stadt"
   },
   "inputs": {
-    "searchLabel": "Search for a place in Basel-Stadt",
+    "searchLabel": "Search for an address in Basel-Stadt:",
     "searchPlaceholder": "Search",
     "noSearchResults": "No results",
     "wahlkreis": "Electoral District",

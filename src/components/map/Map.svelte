@@ -485,7 +485,7 @@
       class="shrink-0 text-right text-base font-medium leading-snug text-gray-900 lg:text-[18px]"
       style="text-shadow: 1px 0 #fff, -1px 0 #fff, 0 1px #fff, 0 -1px #fff;"
     >
-      {appText.map.radius}: {$circleRadius}m
+      {appText.map.radius}: {$circleRadius}&nbsp;m
     </span>
     <div class="flex max-w-[min(100%,20rem)] flex-col items-end gap-y-1">
       <BasemapDropdown
