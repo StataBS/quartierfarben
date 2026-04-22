@@ -84,7 +84,7 @@ export const mapBounds = [
 ];
 
 /** MapLibre `center`: [longitude, latitude] — default analysis point until the map moves. */
-export const initialMapCenter = [7.58979, 47.56022]; // Basel
+export const initialMapCenter = [7.58814, 47.55814]; // Basel
 
 export const initialMapZoom = 13;
 
