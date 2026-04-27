@@ -176,13 +176,13 @@ For use in public settings, Quartierfarben can be run in "kiosk mode", which off
 To activate kiosk mode in the app, append the `?kiosk` url parameter *before* the `#` sign in the url, for example:
 
 ```
-opendatabs.github.io/quartierfarben?kiosk#13/48.20996/16.3704
+statistik.bs.ch/quartierfarben?kiosk#13/48.20996/16.3704
 ```
 
 You can start most browsers in kiosk mode, which causes the app to be displayed in full screen, disables any user interface elements, and supports printing without showing a dialog. E.g. for Firefox, the command to launch the app in kiosk mode would be:
 
 ```
-"C:\Program Files\Mozilla Firefox\firefox.exe" -kiosk -private-window https://opendatabs.github.io/quartierfarben?kiosk
+"C:\Program Files\Mozilla Firefox\firefox.exe" -kiosk -private-window https://statistik.bs.ch/quartierfarben?kiosk
 ```
 
 ## Contributing
