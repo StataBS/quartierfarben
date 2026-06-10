@@ -8,6 +8,7 @@
   import {
     preparePostcardBackForExport,
     encodeFrontSvgForExport,
+    printOneSvgFromBase64,
     printTwoSvgsFromBase64,
     createPrintTargetForUserGesture,
     normalizePrintPaperFormat,
@@ -26,7 +27,7 @@
   const PRINT_BACK_OFFSET_X_STORAGE = "quartierfarben-print-back-offset-x-mm";
   const PRINT_BACK_OFFSET_Y_STORAGE = "quartierfarben-print-back-offset-y-mm";
 
-  /** @type {'A5' | 'A4'} */
+  /** @type {'A6' | 'A5' | 'A4'} */
   let printPaperSize = "A5";
   let backOffsetXmm = 0;
   let backOffsetYmm = 0;
@@ -105,7 +106,7 @@
     paperMenuOpen = false;
   }
 
-  /** @param {'A5' | 'A4'} code */
+  /** @param {'A6' | 'A5' | 'A4'} code */
   function pickPaperSize(code) {
     printPaperSize = code;
     persistPrintPaperSize();
@@ -147,9 +148,11 @@
   }
 
   $: selectedPaperLabel =
-    printPaperSize === "A4"
-      ? appText.print?.optionA4 ?? "A4"
-      : appText.print?.optionA5 ?? "A5";
+    printPaperSize === "A6"
+      ? appText.print?.optionA6 ?? "A6"
+      : printPaperSize === "A4"
+        ? appText.print?.optionA4 ?? "A4"
+        : appText.print?.optionA5 ?? "A5";
 
   const width = $dimensions[0];
   const height = $dimensions[1];
@@ -299,6 +302,29 @@
       downloadSVG($svg);
       return;
     }
+    await printFrontOnly();
+  }
+
+  async function printFrontOnly() {
+    const syncPrintTarget = createPrintTargetForUserGesture();
+    if (!syncPrintTarget) {
+      return;
+    }
+    let frontB64;
+    try {
+      frontB64 = encodeFrontSvgForExport($svg);
+    } catch {
+      syncPrintTarget.dispose();
+      return;
+    }
+    await printOneSvgFromBase64(
+      frontB64,
+      syncPrintTarget,
+      normalizePrintPaperFormat(printPaperSize),
+    );
+  }
+
+  async function printFrontAndBack() {
     const syncPrintTarget = createPrintTargetForUserGesture();
     if (!syncPrintTarget) {
       return;
@@ -389,6 +415,17 @@
           role="listbox"
           aria-label={appText.print.paperLabel}
         >
+          <li role="option" aria-selected={printPaperSize === "A6"}>
+            <button
+              type="button"
+              class="w-full rounded-md px-5 py-5 text-left text-base transition-colors duration-150 hover:bg-purple-50 hover:!text-purple-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 lg:text-[18px] {printPaperSize === 'A6'
+                ? 'font-bold text-blue-900'
+                : 'font-normal text-gray-600'}"
+              on:click={() => pickPaperSize("A6")}
+            >
+              {appText.print.optionA6}
+            </button>
+          </li>
           <li role="option" aria-selected={printPaperSize === "A5"}>
             <button
               type="button"
@@ -464,6 +501,28 @@
   </button>
 
   {#if !$printBackUI}
+    <button
+      type="button"
+      on:click={printFrontAndBack}
+      class="button is-inverted group/print-both w-full max-w-none"
+    >
+      <svg
+        class="h-5 w-5 shrink-0 origin-center group-hover/print-both:animate-[ds-icon-pop_0.45s_ease]"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+        />
+      </svg>
+      <span>{appText.buttons.printBoth}</span>
+    </button>
     <p class="m-0 text-sm leading-snug text-gray-700" role="note">
       {appText.print.hint}
     </p>

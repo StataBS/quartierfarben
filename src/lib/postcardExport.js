@@ -98,13 +98,14 @@ function base64DataUrlToArrayBuffer(dataUrl) {
  * Hidden iframe for printing. Always use a fresh iframe (not `window.open`): popups often work
  * only once after close, or get blocked on repeat; iframe lifecycle is reliable across prints.
  * Must be created synchronously from a click handler so `print()` runs after `await` prep.
+ * Full viewport size (not 0×0): iPad Safari prints the parent page from zero-size iframes.
  * @returns {{ contentWindow: Window, dispose: () => void } | null}
  */
 export function createPrintTargetForUserGesture() {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
   iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    "position:fixed;top:0;left:0;width:100%;height:100%;border:0;margin:0;padding:0;opacity:0;pointer-events:none;z-index:-1";
   document.body.appendChild(iframe);
   const cw = iframe.contentWindow;
   if (!cw) {
@@ -123,14 +124,30 @@ export function createPrintTargetForUserGesture() {
   };
 }
 
-/** @typedef {'A5' | 'A4'} PrintPaperFormat */
+/** @typedef {'A6' | 'A5' | 'A4'} PrintPaperFormat */
+
+/** @type {Record<PrintPaperFormat, [number, number]>} portrait width × height in mm */
+const PAPER_SIZES_MM = {
+  A6: [105, 148],
+  A5: [148, 210],
+  A4: [210, 297],
+};
 
 /**
  * @param {unknown} v
  * @returns {PrintPaperFormat}
  */
 export function normalizePrintPaperFormat(v) {
-  return v === "A4" ? "A4" : "A5";
+  if (v === "A6" || v === "A4" || v === "A5") return v;
+  return "A5";
+}
+
+function isIOSPrintClient() {
+  if (!browser) return false;
+  return (
+    /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
 }
 
 /**
@@ -182,51 +199,7 @@ const CUT_BORDER_BLOCK = `
           display: block;
         }`;
 
-/**
- * @param {PrintPaperFormat} format
- */
-function buildPrintStylesheet(format) {
-  const f = normalizePrintPaperFormat(format);
-  if (f === "A5") {
-    return (
-      `@page { size: A5 portrait; margin: 0; }
-        .print-page { width: 148mm; min-height: 210mm; overflow: hidden; }
-        .postcard-front-wrap,
-        .postcard-back-wrap { justify-content: center; align-items: center; padding: 0; }
-        ${CUT_BORDER_BLOCK}`
-    );
-  }
-  return (
-    `@page { size: A4 portrait; margin: 0; }
-        .print-page { width: 210mm; min-height: 297mm; overflow: hidden; }
-        .postcard-front-wrap,
-        .postcard-back-wrap { justify-content: center; align-items: center; padding: 0; }
-        ${CUT_BORDER_BLOCK}`
-  );
-}
-
-/**
- * @param {string} frontMarkup
- * @param {string} backMarkup
- * @param {PrintPaperFormat} [paperFormat]
- * @param {number} [backOffsetXmm]
- * @param {number} [backOffsetYmm]
- */
-function buildTwoPagePostcardPrintHtml(
-  frontMarkup,
-  backMarkup,
-  paperFormat = "A5",
-  backOffsetXmm = 0,
-  backOffsetYmm = 0,
-) {
-  const f = normalizePrintPaperFormat(paperFormat);
-  const sheet = buildPrintStylesheet(f);
-  const offsetX = normalizePrintOffsetMm(backOffsetXmm);
-  const offsetY = normalizePrintOffsetMm(backOffsetYmm);
-  return (
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Postkarte</title>` +
-    `<style>
-        ${sheet}
+const PRINT_PAGE_LAYOUT_CSS = `
         html, body { margin: 0; padding: 0; background: #fff; }
         body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         .print-page {
@@ -255,24 +228,67 @@ function buildTwoPagePostcardPrintHtml(
         }
         .postcard-back-offset {
           transform: translate(var(--back-offset-x), var(--back-offset-y));
-        }
+        }`;
+
+/**
+ * @param {PrintPaperFormat} format
+ */
+function buildPrintStylesheet(format) {
+  const f = normalizePrintPaperFormat(format);
+  const [w, h] = PAPER_SIZES_MM[f];
+  return (
+    `@page { size: ${f} portrait; margin: 0; }
+        .print-page { width: ${w}mm; min-height: ${h}mm; overflow: hidden; }
+        .postcard-front-wrap,
+        .postcard-back-wrap { justify-content: center; align-items: center; padding: 0; }
+        ${CUT_BORDER_BLOCK}`
+  );
+}
+
+/**
+ * @param {string} frontMarkup
+ * @param {string | null | undefined} backMarkup
+ * @param {PrintPaperFormat} [paperFormat]
+ * @param {number} [backOffsetXmm]
+ * @param {number} [backOffsetYmm]
+ */
+function buildPostcardPrintHtml(
+  frontMarkup,
+  backMarkup,
+  paperFormat = "A5",
+  backOffsetXmm = 0,
+  backOffsetYmm = 0,
+) {
+  const f = normalizePrintPaperFormat(paperFormat);
+  const sheet = buildPrintStylesheet(f);
+  const offsetX = normalizePrintOffsetMm(backOffsetXmm);
+  const offsetY = normalizePrintOffsetMm(backOffsetYmm);
+  const frontPage =
+    `<section class="print-page"><div class="postcard-front-wrap"><div class="postcard-cut-border postcard-cut-border--front">${frontMarkup}</div></div></section>`;
+  const backPage = backMarkup
+    ? `<section class="print-page"><div class="postcard-back-wrap"><div class="postcard-cut-border postcard-cut-border--back-shell postcard-back-offset"><div class="postcard-back-rotated">${backMarkup}</div></div></div></section>`
+    : "";
+  return (
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Postkarte</title>` +
+    `<style>
+        ${sheet}
+        ${PRINT_PAGE_LAYOUT_CSS}
       </style></head><body data-paper="${f.toLowerCase()}" style="--back-offset-x:${offsetX}mm;--back-offset-y:${offsetY}mm;">
-        <section class="print-page"><div class="postcard-front-wrap"><div class="postcard-cut-border postcard-cut-border--front">${frontMarkup}</div></div></section>
-        <section class="print-page"><div class="postcard-back-wrap"><div class="postcard-cut-border postcard-cut-border--back-shell postcard-back-offset"><div class="postcard-back-rotated">${backMarkup}</div></div></div></section>
+        ${frontPage}${backPage}
       </body></html>`
   );
 }
 
 /**
- * Opens print dialog with two SVG pages (e.g. front + back).
+ * Opens print dialog with one or two SVG pages (front only, or front + back).
  * @param {string} frontB64 from {@link encode} / {@link encodeFrontSvgForExport}
- * @param {string} backB64
+ * @param {string | null | undefined} backB64 omit for front-only print
  * @param {{ contentWindow: Window, dispose: () => void } | null} [syncPrintTarget] from {@link createPrintTargetForUserGesture} (same click turn as the button)
- * @param {PrintPaperFormat} [paperFormat] A5 or A4 portrait; postcard centred on the sheet
+ * @param {PrintPaperFormat} [paperFormat] A6, A5, or A4 portrait; postcard centred on the sheet
  * @param {number} [backOffsetXmm] manual duplex registration correction in mm
  * @param {number} [backOffsetYmm] manual duplex registration correction in mm
  */
-export function printTwoSvgsFromBase64(
+export function printPostcardFromBase64(
   frontB64,
   backB64,
   syncPrintTarget,
@@ -288,8 +304,8 @@ export function printTwoSvgsFromBase64(
     }
 
     const frontMarkup = decodeSvgMarkup(frontB64);
-    const backMarkup = decodeSvgMarkup(backB64);
-    const html = buildTwoPagePostcardPrintHtml(
+    const backMarkup = backB64 ? decodeSvgMarkup(backB64) : null;
+    const html = buildPostcardPrintHtml(
       frontMarkup,
       backMarkup,
       normalizePrintPaperFormat(paperFormat),
@@ -298,6 +314,7 @@ export function printTwoSvgsFromBase64(
     );
 
     const isFirefox = /firefox/i.test(navigator.userAgent);
+    const useIframeFallback = isFirefox || isIOSPrintClient();
     let resolved = false;
 
     const complete = () => {
@@ -382,13 +399,8 @@ export function printTwoSvgsFromBase64(
     function printFromIframe() {
       const iframe = document.createElement("iframe");
       iframe.setAttribute("aria-hidden", "true");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      iframe.style.visibility = "hidden";
+      iframe.style.cssText =
+        "position:fixed;top:0;left:0;width:100%;height:100%;border:0;margin:0;padding:0;opacity:0;pointer-events:none;z-index:-1";
       document.body.appendChild(iframe);
 
       const frameWindow = iframe.contentWindow;
@@ -420,8 +432,8 @@ export function printTwoSvgsFromBase64(
       return;
     }
 
-    // Firefox kiosk can block popup windows; use iframe printing there.
-    if (isFirefox) {
+    // Firefox and iPad Safari: popups and zero-size iframes are unreliable.
+    if (useIframeFallback) {
       printFromIframe();
       return;
     }
@@ -433,4 +445,46 @@ export function printTwoSvgsFromBase64(
     }
     printFromWindow(printWindow, true);
   });
+}
+
+/**
+ * Opens print dialog with front SVG only.
+ * @param {string} frontB64
+ * @param {{ contentWindow: Window, dispose: () => void } | null} [syncPrintTarget]
+ * @param {PrintPaperFormat} [paperFormat]
+ */
+export function printOneSvgFromBase64(frontB64, syncPrintTarget, paperFormat) {
+  return printPostcardFromBase64(
+    frontB64,
+    null,
+    syncPrintTarget,
+    paperFormat,
+  );
+}
+
+/**
+ * Opens print dialog with two SVG pages (front + back).
+ * @param {string} frontB64
+ * @param {string} backB64
+ * @param {{ contentWindow: Window, dispose: () => void } | null} [syncPrintTarget]
+ * @param {PrintPaperFormat} [paperFormat]
+ * @param {number} [backOffsetXmm]
+ * @param {number} [backOffsetYmm]
+ */
+export function printTwoSvgsFromBase64(
+  frontB64,
+  backB64,
+  syncPrintTarget,
+  paperFormat,
+  backOffsetXmm = 0,
+  backOffsetYmm = 0,
+) {
+  return printPostcardFromBase64(
+    frontB64,
+    backB64,
+    syncPrintTarget,
+    paperFormat,
+    backOffsetXmm,
+    backOffsetYmm,
+  );
 }
