@@ -8,8 +8,8 @@
   import {
     preparePostcardBackForExport,
     encodeFrontSvgForExport,
-    openPrintWindowForUserGesture,
     printPostcardFront,
+    downloadFrontSvg,
   } from "$lib/postcardExport.js";
 
   import en from "$locales/en.json";
@@ -44,28 +44,18 @@
   function downloadSVG(svg, suffix) {
     var b64;
     if (svg._groups) {
-      const titleText = svg.selectAll(".title-text");
-      titleText.attr("opacity", 1);
-      try {
-        const defs = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "defs",
-        );
-        const style = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "style",
-        );
-        style.type = "text/css";
-        // prettier-ignore
-        style.innerHTML = font('Outfit');
-        defs.appendChild(style);
-        svg.node().appendChild(defs);
-
-        b64 = encode(svg.node().outerHTML);
-      } finally {
-        titleText.attr("opacity", 0);
-      }
+      b64 = encode(svg.node().outerHTML);
     } else {
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const style = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "style",
+      );
+      style.type = "text/css";
+      // prettier-ignore
+      style.innerHTML = font('Outfit');
+      defs.appendChild(style);
+      svg.appendChild(defs);
       b64 = encode(svg.outerHTML);
     }
 
@@ -121,24 +111,16 @@
 
   function printOrDownloadFront() {
     if ($printBackUI) {
-      downloadSVG($svg);
+      downloadFrontSvg($svg, downloadFilename);
       return;
     }
-    const printWindow = openPrintWindowForUserGesture();
     let frontB64;
     try {
       frontB64 = encodeFrontSvgForExport($svg);
     } catch {
-      if (printWindow) {
-        try {
-          printWindow.close();
-        } catch {
-          // ignore
-        }
-      }
       return;
     }
-    printPostcardFront(frontB64, printWindow);
+    printPostcardFront(frontB64);
   }
 </script>
 

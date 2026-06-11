@@ -1,7 +1,7 @@
 import { browser } from "$app/environment";
 import { get } from "svelte/store";
 import { encode } from "$assets/scripts/base64";
-import font from "$assets/scripts/font";
+import firaMonoCss from "$assets/postcard-back-font-fira-mono.txt?raw";
 import { areaSizes } from "./stores.js";
 import { categories } from "./settings.js";
 import { renderLandusePieIntoGroup } from "./postcardBackPie.js";
@@ -60,16 +60,17 @@ export function encodeFrontSvgForExport(svgSelection) {
   if (!svgSelection?.node) return "";
   const titleText = svgSelection.selectAll(".title-text");
   const prevOpacity = titleText.attr("opacity");
-  titleText.attr("opacity", 1);
+  const prevStyleOpacity = titleText.style("opacity");
+  titleText.attr("opacity", 1).style("opacity", null);
   try {
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    defs.setAttribute("class", "font-outfit-export-temp");
+    defs.setAttribute("class", "font-export-temp");
     const style = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "style",
     );
     style.type = "text/css";
-    style.innerHTML = font("Outfit");
+    style.innerHTML = firaMonoCss;
     defs.appendChild(style);
     svgSelection.node().appendChild(defs);
     return encode(svgSelection.node().outerHTML);
@@ -79,7 +80,12 @@ export function encodeFrontSvgForExport(svgSelection) {
     } else {
       titleText.attr("opacity", prevOpacity);
     }
-    svgSelection.select("defs.font-outfit-export-temp").remove();
+    if (prevStyleOpacity == null || prevStyleOpacity === "") {
+      titleText.style("opacity", null);
+    } else {
+      titleText.style("opacity", prevStyleOpacity);
+    }
+    svgSelection.select("defs.font-export-temp").remove();
   }
 }
 
@@ -104,66 +110,6 @@ function decodeSvgMarkupFromB64(b64) {
 
 /**
  * @param {string} frontMarkup
- * @returns {string}
- */
-function buildFrontPrintHtml(frontMarkup) {
-  return (
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Postkarte</title>` +
-    `<style>
-        @page { size: 105mm 148mm; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff; }
-        body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-        .postcard-cut-border {
-          width: 105mm;
-          height: 148mm;
-          line-height: 0;
-          overflow: hidden;
-          outline: 0.35mm dashed #555;
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
-        }
-        .postcard-cut-border svg {
-          width: 105mm;
-          height: 148mm;
-          display: block;
-        }
-      </style></head><body>
-        <div class="postcard-cut-border">${frontMarkup}</div>
-      </body></html>`
-  );
-}
-
-/**
- * @param {Window} printWindow
- * @param {string} html
- */
-function printFromPopupWindow(printWindow, html) {
-  const doc = printWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-
-  printWindow.onafterprint = () => {
-    printWindow.onafterprint = null;
-    try {
-      printWindow.close();
-    } catch {
-      // ignore
-    }
-  };
-
-  printWindow.requestAnimationFrame(() => {
-    printWindow.requestAnimationFrame(() => {
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 140);
-    });
-  });
-}
-
-/**
- * @param {string} frontMarkup
  */
 function printFromMainDocument(frontMarkup) {
   const existing = document.getElementById(PRINT_ROOT_ID);
@@ -175,10 +121,14 @@ function printFromMainDocument(frontMarkup) {
   document.body.appendChild(root);
   document.body.classList.add(PRINTING_CLASS);
 
+  const savedTitle = document.title;
+  document.title = "";
+
   let cleaned = false;
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    document.title = savedTitle;
     document.body.classList.remove(PRINTING_CLASS);
     root.remove();
     window.onafterprint = null;
@@ -197,39 +147,33 @@ function printFromMainDocument(frontMarkup) {
 }
 
 /**
- * Opens a blank print window. Call synchronously at the start of a click handler
- * (before any encoding work) so popup blockers allow it.
- * @returns {Window | null}
+ * Opens the print dialog for the postcard front (A6 / 105×148 mm) in the current tab.
+ * @param {string} frontB64 from {@link encodeFrontSvgForExport}
  */
-export function openPrintWindowForUserGesture() {
-  if (!browser) return null;
-  return window.open("", "_blank", "noopener,noreferrer");
+export function printPostcardFront(frontB64) {
+  if (!browser || !frontB64) return;
+  printFromMainDocument(decodeSvgMarkupFromB64(frontB64));
 }
 
 /**
- * Opens the print dialog for the postcard front (A6 / 105×148 mm).
- * @param {string} frontB64 from {@link encodeFrontSvgForExport}
- * @param {Window | null} [printWindow] from {@link openPrintWindowForUserGesture}
+ * Triggers download of the front postcard SVG (with embedded Fira Mono).
+ * @param {import("d3-selection").Selection<SVGSVGElement, unknown, null, undefined>} svgSelection
+ * @param {string} filename without extension
  */
-export function printPostcardFront(frontB64, printWindow = null) {
-  if (!browser || !frontB64) {
-    if (printWindow) {
-      try {
-        printWindow.close();
-      } catch {
-        // ignore
-      }
-    }
+export function downloadFrontSvg(svgSelection, filename) {
+  if (!browser) return;
+  let frontB64;
+  try {
+    frontB64 = encodeFrontSvgForExport(svgSelection);
+  } catch {
     return;
   }
-
-  const frontMarkup = decodeSvgMarkupFromB64(frontB64);
-  const html = buildFrontPrintHtml(frontMarkup);
-
-  if (printWindow) {
-    printFromPopupWindow(printWindow, html);
-    return;
-  }
-
-  printFromMainDocument(frontMarkup);
+  if (!frontB64) return;
+  const filePath = "data:image/svg+xml;base64,\n" + frontB64;
+  const a = document.createElement("a");
+  a.href = filePath;
+  a.download = `${filename}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }

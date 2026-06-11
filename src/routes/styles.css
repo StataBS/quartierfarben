@@ -26,20 +26,46 @@
   outline: none;
 }
 
-/* Fallback when window.open is blocked: print only the injected postcard root. */
+/* Print only the injected postcard root (no extra browser tab). */
+body.quartierfarben-printing #quartierfarben-print-root {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 105mm;
+  height: 148mm;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body.quartierfarben-printing #quartierfarben-print-root svg {
+  width: 105mm;
+  height: 148mm;
+  display: block;
+}
+
 @media print {
+  @page {
+    size: 105mm 148mm;
+    margin: 0;
+  }
+
   body.quartierfarben-printing * {
     visibility: hidden !important;
   }
+
   body.quartierfarben-printing #quartierfarben-print-root,
   body.quartierfarben-printing #quartierfarben-print-root * {
     visibility: visible !important;
   }
+
   body.quartierfarben-printing #quartierfarben-print-root {
     position: absolute;
     left: 0;
     top: 0;
     width: 105mm;
     height: 148mm;
+    overflow: hidden;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
