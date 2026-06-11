@@ -48,18 +48,7 @@
   "buttons": {
     "downloadFront": "Download",
     "downloadBack": "Download backside",
-    "printFront": "Print front",
-    "printBoth": "Print front and back"
-  },
-  "print": {
-    "paperLabel": "Paper size",
-    "optionA6": "A6",
-    "optionA5": "A5",
-    "optionA4": "A4",
-    "hint": "In the print dialog, choose the same paper size and portrait orientation.",
-    "calibrationIntro": "Here you can fine-tune the back side in millimetres if front and back do not align exactly.",
-    "calibrationX": "Offset X",
-    "calibrationY": "Offset Y"
+    "printFront": "Print"
   },
   "postcard": {
     "front": {
