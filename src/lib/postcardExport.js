@@ -109,16 +109,172 @@ function decodeSvgMarkupFromB64(b64) {
 }
 
 /**
+ * @param {string} markup
+ * @returns {string}
+ */
+function prepareSvgMarkupForPrint(markup) {
+  const template = document.createElement("template");
+  template.innerHTML = markup.trim();
+  const svg = template.content.querySelector("svg");
+  if (!svg) return markup;
+  svg.setAttribute("width", "105mm");
+  svg.setAttribute("height", "148mm");
+  svg.setAttribute(
+    "style",
+    "display:block;width:105mm;height:148mm;margin:0;padding:0;print-color-adjust:exact;-webkit-print-color-adjust:exact",
+  );
+  svg.classList.remove("border");
+  return svg.outerHTML;
+}
+
+const PRINT_STYLE_ID = "quartierfarben-print-style";
+
+const PRINT_STYLE_CSS = `
+  @page {
+    size: A6 portrait;
+    margin: 0;
+  }
+  @media print {
+    html.quartierfarben-printing,
+    body.quartierfarben-printing {
+      width: 105mm !important;
+      height: 148mm !important;
+      max-width: 105mm !important;
+      max-height: 148mm !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+    body.quartierfarben-printing *:not(#quartierfarben-print-root):not(#quartierfarben-print-root *) {
+      display: none !important;
+    }
+    body.quartierfarben-printing #quartierfarben-print-root {
+      display: block !important;
+      visibility: visible !important;
+      position: fixed !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 105mm !important;
+      height: 148mm !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      page-break-before: avoid !important;
+      page-break-after: avoid !important;
+      break-before: avoid !important;
+      break-after: avoid !important;
+      print-color-adjust: exact !important;
+      -webkit-print-color-adjust: exact !important;
+    }
+    body.quartierfarben-printing #quartierfarben-print-root svg,
+    body.quartierfarben-printing #quartierfarben-print-root svg.postcard {
+      display: block !important;
+      width: 105mm !important;
+      height: 148mm !important;
+      min-width: 105mm !important;
+      min-height: 148mm !important;
+      max-width: 105mm !important;
+      max-height: 148mm !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      print-color-adjust: exact !important;
+      -webkit-print-color-adjust: exact !important;
+    }
+  }
+`;
+
+function buildIsolatedPrintHtml(svgMarkup) {
+  return (
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title></title>` +
+    `<style>
+        @page { size: A6 portrait; margin: 0; }
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 105mm;
+          height: 148mm;
+          overflow: hidden;
+        }
+        body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        svg {
+          display: block;
+          width: 105mm;
+          height: 148mm;
+          margin: 0;
+          padding: 0;
+        }
+      </style></head><body>${svgMarkup}</body></html>`
+  );
+}
+
+/**
+ * Print from a one-page iframe document (no extra tab, no blank page 2).
+ * @param {string} svgMarkup
+ */
+function printFromIsolatedFrame(svgMarkup) {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText =
+    "position:fixed;left:-10000px;top:0;width:105mm;height:148mm;border:0;margin:0;padding:0";
+  document.body.appendChild(iframe);
+
+  const win = iframe.contentWindow;
+  if (!win) {
+    iframe.remove();
+    printFromMainDocument(svgMarkup);
+    return;
+  }
+
+  const doc = win.document;
+  doc.open();
+  doc.write(buildIsolatedPrintHtml(svgMarkup));
+  doc.close();
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    try {
+      iframe.remove();
+    } catch {
+      // ignore
+    }
+    win.onafterprint = null;
+  };
+  win.onafterprint = cleanup;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        win.focus();
+        win.print();
+        setTimeout(cleanup, 1200);
+      }, 140);
+    });
+  });
+}
+
+/**
  * @param {string} frontMarkup
  */
 function printFromMainDocument(frontMarkup) {
   const existing = document.getElementById(PRINT_ROOT_ID);
   if (existing) existing.remove();
 
+  const existingStyle = document.getElementById(PRINT_STYLE_ID);
+  if (existingStyle) existingStyle.remove();
+
+  const printStyle = document.createElement("style");
+  printStyle.id = PRINT_STYLE_ID;
+  printStyle.textContent = PRINT_STYLE_CSS;
+  document.head.appendChild(printStyle);
+
   const root = document.createElement("div");
   root.id = PRINT_ROOT_ID;
-  root.innerHTML = frontMarkup;
+  root.innerHTML = prepareSvgMarkupForPrint(frontMarkup);
   document.body.appendChild(root);
+  document.documentElement.classList.add(PRINTING_CLASS);
   document.body.classList.add(PRINTING_CLASS);
 
   const savedTitle = document.title;
@@ -129,8 +285,10 @@ function printFromMainDocument(frontMarkup) {
     if (cleaned) return;
     cleaned = true;
     document.title = savedTitle;
+    document.documentElement.classList.remove(PRINTING_CLASS);
     document.body.classList.remove(PRINTING_CLASS);
     root.remove();
+    printStyle.remove();
     window.onafterprint = null;
   };
 
@@ -152,7 +310,8 @@ function printFromMainDocument(frontMarkup) {
  */
 export function printPostcardFront(frontB64) {
   if (!browser || !frontB64) return;
-  printFromMainDocument(decodeSvgMarkupFromB64(frontB64));
+  const markup = prepareSvgMarkupForPrint(decodeSvgMarkupFromB64(frontB64));
+  printFromIsolatedFrame(markup);
 }
 
 /**
