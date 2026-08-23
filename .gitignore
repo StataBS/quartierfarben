@@ -123,6 +123,7 @@ __marimo__
 # Large data files
 landuse.geojson
 landuse.svg
+snapshots/
 static/tiles/*
 
 # macOS

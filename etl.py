@@ -191,6 +191,55 @@ def _(
 
 
 @app.cell
+def _(gpd, logging, retry_session):
+    def load_ogc_features(url_ogc, collection_id, *, limit=10000, timeout=120, crs_metric=2056):
+        """
+        Load a collection from OGC API Features (WFS3) as GeoJSON.
+        Follows rel=next pagination. Reprojects to crs_metric (LV95).
+        """
+        sess = retry_session()
+        url = f"{url_ogc.rstrip('/')}/collections/{collection_id}/items.json"
+        params = {"limit": limit}
+        features = []
+        pages = 0
+        headers = {"Accept": "application/geo+json, application/json"}
+
+        logging.info(f"Fetching OGC API Features collection: {collection_id}")
+        while url:
+            pages += 1
+            resp = sess.get(url, params=params, timeout=timeout, headers=headers)
+            resp.raise_for_status()
+            gj = resp.json()
+            if not isinstance(gj, dict) or gj.get("type") != "FeatureCollection":
+                raise RuntimeError(f"Expected FeatureCollection from {url}")
+            page_features = gj.get("features") or []
+            features.extend(page_features)
+            logging.info(
+                f"  page {pages}: {len(page_features)} features (total {len(features)})"
+            )
+
+            next_url = None
+            for link in gj.get("links") or []:
+                if link.get("rel") == "next" and link.get("href"):
+                    next_url = link["href"]
+                    break
+            url = next_url
+            params = None  # next href already contains query params
+
+        if not features:
+            raise RuntimeError(f"No features returned for collection {collection_id}")
+
+        gdf = gpd.GeoDataFrame.from_features(
+            {"type": "FeatureCollection", "features": features},
+            crs="EPSG:4326",
+        )
+        gdf = gdf.to_crs(crs_metric)
+        logging.info(f"Loaded {len(gdf)} features from {collection_id} in EPSG:{crs_metric}")
+        return gdf
+    return (load_ogc_features,)
+
+
+@app.cell
 def _(gpd):
     def build_nearest_point_to_building_mapping(points_gdf, buildings_gdf, *, label_col, max_distance_m=0.0, crs_metric=2056):
         p = points_gdf.copy()
@@ -242,7 +291,8 @@ def _(mo):
 @app.cell
 def _():
     url_wfs = "https://wfs.geo.bs.ch/"
-    return (url_wfs,)
+    url_ogc_features = "https://api.geo.bs.ch/ogc/v1/wfs3"
+    return url_ogc_features, url_wfs
 
 
 @app.cell(hide_code=True)
@@ -294,14 +344,18 @@ def _(load_data_from_wfs, url_wfs):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Load [Points of Interest - Kultur](https://map.geo.bs.ch/?lang=de&baselayer_ref=Grundkarte%20farbig&tree_groups=Basel%20Info%20Points%20of%20Interest&tree_group_layers_Basel%20Info%20Points%20of%20Interest=BI_KulturUnterhaltung)
+    ## Load [Points of Interest - Kultur](https://api.geo.bs.ch/ogc/v1/wfs3/collections/ch.bs.basel_info_points_of_interest_bipo.kultur_unterhaltung)
     """)
     return
 
 
 @app.cell
-def _(load_data_from_wfs, url_wfs):
-    gdf_kultur = load_data_from_wfs(url_wfs, shapes_to_load=['BI_KulturUnterhaltung'])
+def _(load_ogc_features, url_ogc_features):
+    gdf_kultur = load_ogc_features(
+        url_ogc_features,
+        "ch.bs.basel_info_points_of_interest_bipo.kultur_unterhaltung",
+    )
+    gdf_kultur = gdf_kultur.rename(columns={"Subkategorie": "bi_subkategorie"})
     gdf_kultur
     return (gdf_kultur,)
 
@@ -676,17 +730,8 @@ def _(json, logging, os, pd, requests):
 
 
 @app.cell
-def _(
-    CRS_CH,
-    gdf_all,
-    get_color_for_nutzung,
-    mapping_kultur,
-    mapping_schulen,
-    pd,
-):
-    gdf_nutzung = gdf_all.copy()
-
-    code2de = {
+def _(pd):
+    CODE2DE = {
         "1010": "Provisorische Unterkunft",
         "1020": "Gebäude ausschliesslich für Wohnnutzung",
         "1021": "Einfamilienhaus, ohne Nebennutzung",
@@ -701,67 +746,120 @@ def _(
     COL_OR = "oeffentlicher Raum"
     COL_CODE = "gebaeudekategorieid"
 
-    # Fallback from bs_art_txt: "." -> " - ", "_" -> " "
+    NUTZUNG_STAGES = (
+        "bodenbedeckung",
+        "gebaeudekategorie",
+        "oeffentlicher_raum",
+        "kultur",
+        "schulen",
+    )
+
     def clean_bs_art(s):
-        if pd.isna(s): return None
+        if pd.isna(s):
+            return None
         s = str(s)
         return s.replace(".", " - ").replace("_", " ")
 
-    # normalize codes to strings without decimals
     def norm_code(x):
-        if pd.isna(x): return None
-        if isinstance(x, (int,)): return str(x)
-        if isinstance(x, float):  return str(int(x))
+        if pd.isna(x):
+            return None
+        if isinstance(x, int):
+            return str(x)
+        if isinstance(x, float):
+            return str(int(x))
         return str(x).strip()
 
-    # start with fallback from bs_art_txt
-    gdf_nutzung["nutzung"] = gdf_nutzung["bs_art_txt"].map(clean_bs_art)
+    def apply_nutzung_stages(gdf_base, mapping_kultur=None, mapping_schulen=None, *, stage):
+        if stage not in NUTZUNG_STAGES:
+            raise ValueError(f"Unknown stage {stage!r}; expected one of {NUTZUNG_STAGES}")
 
-    # Gebäude mapping (overrides)
-    gdf_nutzung["_code"] = gdf_nutzung[COL_CODE].apply(norm_code) if COL_CODE in gdf_nutzung.columns else None
-    has_code = gdf_nutzung["_code"].notna() if COL_CODE in gdf_nutzung.columns else pd.Series(False, index=gdf_nutzung.index)
-    gdf_nutzung.loc[has_code, "nutzung"] = "Gebäude - " + gdf_nutzung.loc[has_code, "_code"].map(lambda c: code2de.get(c, c))
+        gdf = gdf_base.copy()
+        gdf["nutzung"] = gdf["bs_art_txt"].map(clean_bs_art)
 
-    # Öffentlicher Raum for TARGET_BB (overrides fallback, but not Gebäude)
-    if COL_OR in gdf_nutzung.columns:
-        mask_ps = (gdf_nutzung["bs_art_txt"] == TARGET_BB) & gdf_nutzung[COL_OR].notna() & ~has_code
-        gdf_nutzung.loc[mask_ps, "nutzung"] = "befestigt - uebrige befestigte - " + gdf_nutzung.loc[mask_ps, COL_OR].astype(str)
+        if stage in ("gebaeudekategorie", "oeffentlicher_raum", "kultur", "schulen"):
+            gdf["_code"] = (
+                gdf[COL_CODE].apply(norm_code)
+                if COL_CODE in gdf.columns
+                else None
+            )
+            has_code = (
+                gdf["_code"].notna()
+                if COL_CODE in gdf.columns
+                else pd.Series(False, index=gdf.index)
+            )
+            gdf.loc[has_code, "nutzung"] = (
+                "Gebäude - "
+                + gdf.loc[has_code, "_code"].map(lambda c: CODE2DE.get(c, c))
+            )
+            gdf = gdf.drop(columns=[c for c in ["_code"] if c in gdf.columns])
 
-    gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_code"] if c in gdf_nutzung.columns])
+        if stage in ("oeffentlicher_raum", "kultur", "schulen") and COL_OR in gdf.columns:
+            if COL_CODE in gdf.columns:
+                has_code = gdf[COL_CODE].apply(norm_code).notna()
+            else:
+                has_code = pd.Series(False, index=gdf.index)
+            mask_ps = (
+                (gdf["bs_art_txt"] == TARGET_BB)
+                & gdf[COL_OR].notna()
+                & ~has_code
+            )
+            gdf.loc[mask_ps, "nutzung"] = (
+                "befestigt - uebrige befestigte - "
+                + gdf.loc[mask_ps, COL_OR].astype(str)
+            )
 
-    # Merge mapping onto full gdf_buildings
-    gdf_nutzung = gdf_nutzung.merge(
-        mapping_kultur.rename(columns={
-            "bi_subkategorie": "_kultur_subkat",
-            "dist_m": "kultur_dist_m"
-        }),
-        on="laufnr",
-        how="left"
+        bldg_mask = gdf["bs_art_txt"].eq("Gebaeude.Gebaeude") & gdf.geometry.notna()
+
+        if stage in ("kultur", "schulen") and mapping_kultur is not None:
+            gdf = gdf.merge(
+                mapping_kultur.rename(columns={
+                    "bi_subkategorie": "_kultur_subkat",
+                    "dist_m": "kultur_dist_m",
+                }),
+                on="laufnr",
+                how="left",
+            )
+            mask_override = bldg_mask & gdf["_kultur_subkat"].notna()
+            gdf.loc[mask_override, "nutzung"] = (
+                "Gebäude - " + gdf.loc[mask_override, "_kultur_subkat"].astype(str)
+            )
+            gdf = gdf.drop(columns=[c for c in ["_kultur_subkat"] if c in gdf.columns])
+
+        if stage == "schulen" and mapping_schulen is not None:
+            gdf = gdf.merge(
+                mapping_schulen.rename(columns={
+                    "schultyp": "_schule_schultyp",
+                    "dist_m": "schule_dist_m",
+                }),
+                on="laufnr",
+                how="left",
+            )
+            has_school = gdf["_schule_schultyp"].notna()
+            gdf.loc[bldg_mask & has_school, "nutzung"] = (
+                "Gebäude - " + gdf.loc[bldg_mask & has_school, "_schule_schultyp"].astype(str)
+            )
+            gdf = gdf.drop(columns=[c for c in ["_schule_schultyp"] if c in gdf.columns])
+
+        return gdf
+
+    return (apply_nutzung_stages,)
+
+
+@app.cell
+def _(
+    CRS_CH,
+    apply_nutzung_stages,
+    gdf_all,
+    get_color_for_nutzung,
+    mapping_kultur,
+    mapping_schulen,
+):
+    gdf_nutzung = apply_nutzung_stages(
+        gdf_all,
+        mapping_kultur,
+        mapping_schulen,
+        stage="schulen",
     )
-
-    # Override `nutzung` ONLY for building polygons that got a Kultur match
-    bldg_mask = gdf_nutzung["bs_art_txt"].eq("Gebaeude.Gebaeude") & gdf_nutzung.geometry.notna()
-    mask_override = bldg_mask & gdf_nutzung["_kultur_subkat"].notna()
-    gdf_nutzung.loc[mask_override, "nutzung"] = "Gebäude - " + gdf_nutzung.loc[mask_override, "_kultur_subkat"].astype(str)
-
-    # (Keep kultur_dist_m for QA; drop helper if you want)
-    gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_kultur_subkat"] if c in gdf_nutzung.columns])
-
-    # Merge + override (schools take precedence over prior Kultur overrides if inside the building)
-    gdf_nutzung = gdf_nutzung.merge(
-        mapping_schulen.rename(columns={"schultyp": "_schule_schultyp", "dist_m": "schule_dist_m"}),
-        on="laufnr",
-        how="left",
-    )
-
-    has_school  = gdf_nutzung["_schule_schultyp"].notna()
-    gdf_nutzung.loc[bldg_mask & has_school, "nutzung"] = \
-        "Gebäude - " + gdf_nutzung.loc[bldg_mask & has_school, "_schule_schultyp"].astype(str)
-
-    # Clean up helper column
-    gdf_nutzung = gdf_nutzung.drop(columns=[c for c in ["_schule_schultyp"] if c in gdf_nutzung.columns])
-
-    # Add color column based on nutzung
     gdf_nutzung["color"] = gdf_nutzung["nutzung"].apply(get_color_for_nutzung)
 
     if gdf_nutzung.crs is None:
@@ -850,6 +948,9 @@ def _(CRS_CH, box, gpd, logging):
                 bounds = bounds_gdf.total_bounds
         
         minx, miny, maxx, maxy = bounds
+
+        clip_geom = box(minx, miny, maxx, maxy)
+        gdf_projected = gdf_projected[gdf_projected.geometry.intersects(clip_geom)]
 
         # Calculate aspect ratio and height if not provided
         aspect_ratio = (maxy - miny) / (maxx - minx) if (maxx - minx) > 0 else 1.0
@@ -952,6 +1053,158 @@ def _(CRS_CH, box, gpd, logging):
         return output_path
 
     return (export_to_svg,)
+
+
+@app.cell
+def _(CRS_CH, apply_nutzung_stages, export_to_svg, os):
+    # LV95 bbox around Basel city center (~6 km); set to None for full canton extent
+    SNAPSHOT_BOUNDS = (2608402, 1264654, 2614402, 1270654)
+
+    PIPELINE_SNAPSHOT_STAGES = [
+        ("00_after_bodenbedeckung", "bodenbedeckung"),
+        ("01_after_gebaeudekategorie", "gebaeudekategorie"),
+        ("02_after_oeffentlicher_raum", "oeffentlicher_raum"),
+        ("03_after_kultur", "kultur"),
+        ("04_after_schulen", "schulen"),
+    ]
+
+    def export_stage_snapshot(
+        gdf_base,
+        stage,
+        label,
+        *,
+        get_color_for_nutzung,
+        mapping_kultur=None,
+        mapping_schulen=None,
+        output_dir="snapshots",
+        bounds=SNAPSHOT_BOUNDS,
+        width=2000,
+    ):
+        os.makedirs(output_dir, exist_ok=True)
+        gdf = apply_nutzung_stages(
+            gdf_base,
+            mapping_kultur,
+            mapping_schulen,
+            stage=stage,
+        )
+        if gdf.crs is None:
+            gdf = gdf.set_crs(CRS_CH)
+        gdf["color"] = gdf["nutzung"].apply(get_color_for_nutzung)
+        path = os.path.join(output_dir, f"{label}.svg")
+        export_to_svg(
+            gdf,
+            output_path=path,
+            bounds=bounds,
+            width=width,
+            stroke_width=0,
+            stroke_color="#000000",
+        )
+        return path, gdf
+
+    def export_pipeline_snapshots(
+        *,
+        gdf_by_stage,
+        get_color_for_nutzung,
+        mapping_kultur,
+        mapping_schulen,
+        output_dir,
+        bounds,
+        logging,
+    ):
+        gdf_for_stage = {
+            "bodenbedeckung": gdf_by_stage["bodenbedeckung"],
+            "gebaeudekategorie": gdf_by_stage["gebaeudekategorie"],
+            "oeffentlicher_raum": gdf_by_stage["oeffentlicher_raum"],
+            "kultur": gdf_by_stage["kultur"],
+            "schulen": gdf_by_stage["schulen"],
+        }
+        paths = []
+        for label, stage in PIPELINE_SNAPSHOT_STAGES:
+            path, _ = export_stage_snapshot(
+                gdf_for_stage[stage],
+                stage,
+                label,
+                get_color_for_nutzung=get_color_for_nutzung,
+                mapping_kultur=mapping_kultur,
+                mapping_schulen=mapping_schulen,
+                output_dir=output_dir,
+                bounds=bounds,
+            )
+            paths.append(path)
+            logging.info(f"Pipeline snapshot: {path}")
+        return paths
+
+    return PIPELINE_SNAPSHOT_STAGES, SNAPSHOT_BOUNDS, export_pipeline_snapshots, export_stage_snapshot
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Pipeline snapshots
+
+    SVG exports after each enrichment step for the Basel city center overview.
+    """)
+    return
+
+
+@app.cell
+def _(
+    SNAPSHOT_BOUNDS,
+    export_pipeline_snapshots,
+    gdf_all,
+    gdf_bodenbedeckung,
+    gdf_bodenbedeckung_cat,
+    get_color_for_nutzung,
+    logging,
+    mapping_kultur,
+    mapping_schulen,
+):
+    gdf_by_stage = {
+        "bodenbedeckung": gdf_bodenbedeckung,
+        "gebaeudekategorie": gdf_bodenbedeckung_cat,
+        "oeffentlicher_raum": gdf_all,
+        "kultur": gdf_all,
+        "schulen": gdf_all,
+    }
+
+    snapshot_paths = export_pipeline_snapshots(
+        gdf_by_stage=gdf_by_stage,
+        get_color_for_nutzung=get_color_for_nutzung,
+        mapping_kultur=mapping_kultur,
+        mapping_schulen=mapping_schulen,
+        output_dir="snapshots",
+        bounds=SNAPSHOT_BOUNDS,
+        logging=logging,
+    )
+    snapshot_paths
+    return (snapshot_paths,)
+
+
+@app.cell
+def _(mo, snapshot_paths):
+    def _snapshot_pair(title, before_path, after_path):
+        return mo.vstack([
+            mo.md(f"**{title}**"),
+            mo.hstack(
+                [
+                    mo.vstack([mo.md("_before_"), mo.image(before_path)]),
+                    mo.vstack([mo.md("_after_"), mo.image(after_path)]),
+                ],
+                justify="start",
+                gap=2,
+            ),
+        ], gap=0.5)
+
+    mo.vstack([
+        mo.md("### Overview (Basel city center)"),
+        mo.md("**Bodenbedeckung (base layer)**"),
+        mo.image(snapshot_paths[0]),
+        _snapshot_pair("Gebäudekategorie", snapshot_paths[0], snapshot_paths[1]),
+        _snapshot_pair("Öffentlicher Raum", snapshot_paths[1], snapshot_paths[2]),
+        _snapshot_pair("Kultur", snapshot_paths[2], snapshot_paths[3]),
+        _snapshot_pair("Schulen", snapshot_paths[3], snapshot_paths[4]),
+    ], gap=1.5)
+    return
 
 
 @app.cell
