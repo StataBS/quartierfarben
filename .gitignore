@@ -124,6 +124,7 @@ __marimo__
 landuse.geojson
 landuse.svg
 snapshots/
+documentation/
 static/tiles/*
 
 # macOS
