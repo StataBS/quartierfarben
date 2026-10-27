@@ -1,0 +1,26 @@
+FROM python:3.12-slim
+
+# Optional corporate proxy (used when building/running behind intranet proxy).
+ARG PROXY_FULL
+ENV http_proxy=${PROXY_FULL:+http://${PROXY_FULL}}
+ENV https_proxy=${PROXY_FULL:+http://${PROXY_FULL}}
+ENV no_proxy=.bs.ch,localhost,127.0.0.1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tippecanoe \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /etl
+
+COPY etl.py ./
+COPY src/lib/colors.json ./src/lib/colors.json
+COPY generate-tiles.sh ./
+RUN chmod +x generate-tiles.sh
+
+VOLUME ["/output"]
+
+ENTRYPOINT ["./generate-tiles.sh"]

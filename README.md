@@ -40,6 +40,27 @@ You can preview the production build with `npm run preview`.
 
 To deploy your app, simply copy the `build` folder to your web server.
 
+## Running with Docker
+
+```bash
+# App (optional build-args: API_KEY_MAPBS, BASE_PATH)
+docker build -t quartierfarben .
+docker run --rm -p 8020:8020 quartierfarben
+
+# Tiles image (writes vector tiles to a mounted output dir)
+docker build -f Dockerfile.tiles -t quartierfarben-tiles .
+docker run --rm -v "$PWD/static/tiles:/output" quartierfarben-tiles
+```
+
+On push to `main`, [`.github/workflows/docker.yml`](.github/workflows/docker.yml) builds and pushes to GitHub Container Registry:
+
+- `ghcr.io/statabs/quartierfarben` — app (`serve` on port **8020**)
+- `ghcr.io/statabs/quartierfarben/tiles` — ETL + tippecanoe
+
+Optional Actions config: repository secret `API_KEY_MAPBS`, variable `BASE_PATH`.
+
+Deployment (`docker-compose`, schedules, host volumes) lives in the internal GitLab project, which pulls these images from GHCR.
+
 ## Data Processing Pipeline & Tile-Creation
 
 The data processing was done in Python and marimo.
