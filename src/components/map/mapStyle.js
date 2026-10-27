@@ -38,8 +38,8 @@ export default function (location) {
       "landuse-source": {
         type: "vector",
         tiles: [location + "tiles/{z}/{x}/{y}.pbf"],
-        minzoom: 10,
-        maxzoom: 13,
+        minzoom: 12,
+        maxzoom: 17,
       },
     },
     layers: [

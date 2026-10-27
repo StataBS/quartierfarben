@@ -1,0 +1,17 @@
+{
+  "headers": [
+    {
+      "source": "**/*.pbf",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.mapbox-vector-tile"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}

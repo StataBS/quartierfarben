@@ -35,4 +35,6 @@ COPY --from=build /app/build ./build
 VOLUME ["/app/build/tiles"]
 
 EXPOSE 8020
-CMD ["serve", "-s", "build", "-l", "8020"]
+# Do not use `serve -s`: missing /tiles/*.pbf would be rewritten to index.html,
+# and MapLibre then fails with "Unimplemented type: 4" while parsing HTML as MVT.
+CMD ["serve", "build", "-l", "8020"]
