@@ -2687,13 +2687,7 @@ postcss-discard-overridden@^7.0.3:
   resolved "https://registry.yarnpkg.com/postcss-discard-overridden/-/postcss-discard-overridden-7.0.3.tgz#366895511ed1d5ffe2d16a84c530d05e554ebff0"
   integrity sha512-aNovXo9UsZuRNLzHJtp13lHIvinDPfiXBPePpXkSjCbgp++iU2FqE+YxvjIsg6EdyPZsASFbfu+JcBFVsErXIQ==
 
-postcss-hexrgba@^2.1.0:
-  version "2.1.0"
-  resolved "git+ssh://git@github.com/thormeier/postcss-hexrgba.git#8a00694729ff86502890e39ecf6903b400ecc91a"
-  dependencies:
-    postcss-value-parser "^4.1.0"
-
-"postcss-hexrgba@github:thormeier/postcss-hexrgba":
+postcss-hexrgba@^2.1.0, "postcss-hexrgba@github:thormeier/postcss-hexrgba":
   version "2.1.0"
   uid "8a00694729ff86502890e39ecf6903b400ecc91a"
   resolved "https://codeload.github.com/thormeier/postcss-hexrgba/tar.gz/8a00694729ff86502890e39ecf6903b400ecc91a"
@@ -3303,9 +3297,9 @@ svelte-floating-ui@1.5.8:
     "@floating-ui/dom" "^1.5.3"
 
 svelte-preprocess@^6.0.3:
-  version "6.0.3"
-  resolved "https://registry.npmjs.org/svelte-preprocess/-/svelte-preprocess-6.0.3.tgz"
-  integrity sha512-PLG2k05qHdhmRG7zR/dyo5qKvakhm8IJ+hD2eFRQmMLHp7X3eJnjeupUtvuRpbNiF31RjVw45W+abDwHEmP5OA==
+  version "6.0.5"
+  resolved "https://registry.yarnpkg.com/svelte-preprocess/-/svelte-preprocess-6.0.5.tgz#2b8eb20c4ec85aa6ea4c0b193765f4c511054685"
+  integrity sha512-sgwew5yV/2eMeQobIWgAxCNarKwiTUDIc3siAUbq3sp0G6ONtzk0W+wJihMdqjbYb3iGU3ubpGv0usnnuXT3qg==
 
 svelte-select@^5.8.3:
   version "5.8.3"
