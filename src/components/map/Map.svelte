@@ -1,6 +1,6 @@
 <script>
   import "maplibre-gl/dist/maplibre-gl.css";
-  import maplibregl from "maplibre-gl";
+  import * as maplibregl from "maplibre-gl";
   import { onMount, tick } from "svelte";
   import { get } from "svelte/store";
   import mapStyle from "./mapStyle.js";

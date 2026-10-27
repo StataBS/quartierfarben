@@ -144,14 +144,14 @@
    * from .button (purple), without extra font-weight (same as Über uns when “active”).
    */
   :global(button.button.is-sm[data-open="true"]) {
-    --button-bg: theme("colors.purple.100");
-    --button-border: theme("colors.purple.600");
-    --button-text: theme("colors.purple.900");
+    --button-bg: theme("colors.purple-100");
+    --button-border: theme("colors.purple-600");
+    --button-text: theme("colors.purple-900");
   }
 
   :global(button.button.is-sm[data-open="true"]:hover),
   :global(button.button.is-sm[data-open="true"]:focus-visible) {
-    --button-text: theme("colors.purple.900");
+    --button-text: theme("colors.purple-900");
   }
 
   /* DS sets -my-5 on nested svg; reset so chevron stays visible and aligned with label */

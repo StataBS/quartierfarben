@@ -449,7 +449,7 @@ https://observablehq.com/@d3/treemap
       : `transform-origin: top center; top: calc(50% - 3rem); transform: translateY(-50%) scale(${($screenWidth - mobileHorizontalInsetPx) / 444}); height: ${(630 * ($screenWidth - 0)) / 444}px;`
     : ""}
 >
-  <main class="w-full text-center" bind:this={visWrapper} />
+  <main class="w-full text-center" bind:this={visWrapper}></main>
 </div>
 
 <style>

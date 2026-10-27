@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig, loadEnv } from "vite";
 import KantonBSDesignsystemPlugin from "@kanton-basel-stadt/designsystem/vite";
@@ -25,7 +26,20 @@ export default defineConfig(({ mode }) => {
       exclude: ["svelte-select", "@sveltejs/kit", "$app", "$env"],
     },
     plugins: [
-      sveltekit(),
+      sveltekit({
+        adapter: adapter(),
+        // Keep $lib / custom $ aliases until imports are migrated to package.json `#…` subpaths.
+        alias: {
+          $lib: "src/lib",
+          $components: "src/components",
+          $locales: "src/locales",
+          $assets: "src/assets",
+        },
+        paths: {
+          base: process.env.BASE_PATH || "",
+        },
+        prerender: { entries: ["*"] },
+      }),
       KantonBSDesignsystemPlugin({
         iconOptions: { compiler: "svelte" },
         tailwindOptions: {

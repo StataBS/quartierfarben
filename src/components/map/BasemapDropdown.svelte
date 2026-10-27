@@ -190,14 +190,14 @@
   }
 
   :global(button.basemap-trigger.button[data-open="true"]) {
-    --button-bg: theme("colors.purple.100");
-    --button-border: theme("colors.purple.600");
-    --button-text: theme("colors.purple.900");
+    --button-bg: theme("colors.purple-100");
+    --button-border: theme("colors.purple-600");
+    --button-text: theme("colors.purple-900");
   }
 
   :global(button.basemap-trigger.button[data-open="true"]:hover),
   :global(button.basemap-trigger.button[data-open="true"]:focus-visible) {
-    --button-text: theme("colors.purple.900");
+    --button-text: theme("colors.purple-900");
   }
 
   :global(button.basemap-trigger.button) .lang-chevron {
