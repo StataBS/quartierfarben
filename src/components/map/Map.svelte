@@ -1,6 +1,7 @@
 <script>
   import "maplibre-gl/dist/maplibre-gl.css";
   import * as maplibregl from "maplibre-gl";
+  import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
   import { onMount, tick } from "svelte";
   import { get } from "svelte/store";
   import mapStyle from "./mapStyle.js";
@@ -48,6 +49,9 @@
 
   import en from "$locales/en.json";
   import de from "$locales/de.json";
+
+  maplibregl.setWorkerUrl(workerUrl);
+
   let appText = {};
   $: {
     if ($lang === 'en') {
