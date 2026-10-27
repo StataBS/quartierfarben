@@ -276,9 +276,14 @@
   };
 
   onMount(() => {
+    // Ensure trailing slash so `…/quartierfarben` + `tiles/…` does not become `…/quartierfarbentiles/…`
+    const tileBase =
+      window.location.origin +
+      window.location.pathname.replace(/\/?$/, "/");
+
     map = new maplibregl.Map({
       container: "map", // container id
-      style: mapStyle(window.location.origin + window.location.pathname),
+      style: mapStyle(tileBase),
       maxBounds: mapBounds,
       dragRotate: false,
       attributionControl: false,
