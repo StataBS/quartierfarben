@@ -283,7 +283,10 @@ def _(mo):
     mo.md(r"""
     # Load Data
 
-    For more information on how to load data from WFS, see this page [Geodienste - Kanton Basel-Stadt](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/geodienste#wfsbs)
+    Each theme is loaded from **exactly one** endpoint (OGC API Features *or* classic WFS).
+    Geoinfo migrates layers one-way; both never exist in parallel for the same dataset.
+
+    See [Geodienste - Kanton Basel-Stadt](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/geodienste#wfsbs).
     """)
     return
 
@@ -304,8 +307,12 @@ def _(mo):
 
 
 @app.cell
-def _(load_data_from_wfs, url_wfs):
-    gdf_bodenbedeckung = load_data_from_wfs(url_wfs, prefix="ms:BS_Bodenbedeckungen")
+def _(load_ogc_features, url_ogc_features):
+    gdf_bodenbedeckung = load_ogc_features(
+        url_ogc_features,
+        "ch.bs.av_bodenbedeckung_einzelobjekte_avbe.bodenbedeckung",
+    )
+    gdf_bodenbedeckung = gdf_bodenbedeckung.rename(columns={"Bodenbedeckungsart": "bs_art_txt"})
     gdf_bodenbedeckung = gdf_bodenbedeckung.reset_index(drop=True).assign(laufnr=lambda df: df.index + 1)
     gdf_bodenbedeckung
     return (gdf_bodenbedeckung,)
@@ -321,7 +328,10 @@ def _(mo):
 
 @app.cell
 def _(load_data_from_wfs, url_wfs):
-    gdf_gebaeudekategorie = load_data_from_wfs(url_wfs, shapes_to_load=['DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie'])
+    gdf_gebaeudekategorie = load_data_from_wfs(
+        url_wfs,
+        shapes_to_load=["ms:DM_Gebaeudeinformationen_DatenmarktGebaeudekategorie"],
+    )
     gdf_gebaeudekategorie
     return (gdf_gebaeudekategorie,)
 
@@ -336,7 +346,10 @@ def _(mo):
 
 @app.cell
 def _(load_data_from_wfs, url_wfs):
-    gdf_oeffentlicher_raum = load_data_from_wfs(url_wfs, shapes_to_load=['OR_OeffentlicherRaum_Allmend', 'OR_OeffentlicherRaum_Noerg'])
+    gdf_oeffentlicher_raum = load_data_from_wfs(
+        url_wfs,
+        shapes_to_load=["ms:OR_OeffentlicherRaum_Allmend", "ms:OR_OeffentlicherRaum_Noerg"],
+    )
     gdf_oeffentlicher_raum
     return (gdf_oeffentlicher_raum,)
 
@@ -369,46 +382,48 @@ def _(mo):
 
 
 @app.cell
-def _(CRS_CH, gpd, load_data_from_wfs, pd, url_wfs):
-    gdf_schulstandorte_basel = load_data_from_wfs(url_wfs, prefix="ms:SC")
-    gdf_schulstandorte_riehen_bettingen = load_data_from_wfs(url_wfs, prefix="ms:SO")
+def _(CRS_CH, gpd, load_data_from_wfs, load_ogc_features, pd, url_ogc_features, url_wfs):
+    gdf_schul_basel_punkt = load_ogc_features(
+        url_ogc_features,
+        "ch.bs.schulstandorte_gemeinde_basel_ssba.punkt",
+    )
+    gdf_schul_basel_flaeche = load_ogc_features(
+        url_ogc_features,
+        "ch.bs.schulstandorte_gemeinde_basel_ssba.flaeche",
+    )
+    gdf_b = gpd.GeoDataFrame(
+        pd.concat([gdf_schul_basel_punkt, gdf_schul_basel_flaeche], ignore_index=True),
+        crs=gdf_schul_basel_punkt.crs,
+    ).rename(columns={"Schultyp": "sc_schultyp"})
 
-    def _unwrap(x):
-        return x[0] if isinstance(x, tuple) else x
-
-    gdf_b = _unwrap(gdf_schulstandorte_basel).copy()
-    gdf_rb = _unwrap(gdf_schulstandorte_riehen_bettingen).copy()
-
+    gdf_rb = load_data_from_wfs(url_wfs, prefix="ms:SO")
 
     gdf_b = gdf_b.set_crs(CRS_CH) if gdf_b.crs is None else gdf_b.to_crs(CRS_CH)
     gdf_rb = gdf_rb.set_crs(CRS_CH) if gdf_rb.crs is None else gdf_rb.to_crs(CRS_CH)
 
-    # Basel: centroid for non-point geometries
+    # Basel fläche → centroid
     non_point = ~gdf_b.geometry.geom_type.isin(["Point", "MultiPoint"])
     if non_point.any():
         gdf_b.loc[non_point, "geometry"] = gdf_b.loc[non_point, "geometry"].centroid
 
-    # Build unified 'schultyp'
     if "sc_schultyp" not in gdf_b.columns:
         raise KeyError("Expected column 'sc_schultyp' in Basel dataset.")
     if "so_schultyp" not in gdf_rb.columns:
         raise KeyError("Expected column 'so_schultyp' in Riehen/Bettingen dataset.")
 
-    gdf_b["schultyp"]  = gdf_b["sc_schultyp"]
+    gdf_b["schultyp"] = gdf_b["sc_schultyp"]
     gdf_rb["schultyp"] = gdf_rb["so_schultyp"]
 
-    basel_pts = gdf_b[["schultyp", "geometry"]].copy()
-    rb_pts    = gdf_rb[["schultyp", "geometry"]].copy()
-
     gdf_schulstandorte = gpd.GeoDataFrame(
-        pd.concat([basel_pts, rb_pts], ignore_index=True),
-        crs=CRS_CH
+        pd.concat(
+            [gdf_b[["schultyp", "geometry"]], gdf_rb[["schultyp", "geometry"]]],
+            ignore_index=True,
+        ),
+        crs=CRS_CH,
     )
-
-    # Clean up (optional)
     gdf_schulstandorte = gdf_schulstandorte[
         gdf_schulstandorte.geometry.notna() & gdf_schulstandorte["schultyp"].notna()
-        ].reset_index(drop=True)
+    ].reset_index(drop=True)
 
     gdf_schulstandorte
     return (gdf_schulstandorte,)
