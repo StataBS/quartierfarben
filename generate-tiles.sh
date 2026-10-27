@@ -4,7 +4,7 @@ set -e
 echo "=== Starting ETL process ==="
 echo "Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-# Run the ETL script (marimo with PEP-723 dependencies)
+# Run the ETL as a marimo *script* (skips edit-only SVG/snapshot cells via mo.stop)
 echo "Running etl.py..."
 uv run etl.py
 

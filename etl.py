@@ -15,7 +15,7 @@
 import marimo
 
 __generated_with = "0.18.4"
-app = marimo.App(width="medium", auto_download=["html"])
+app = marimo.App(width="medium")
 
 
 @app.cell
@@ -885,21 +885,22 @@ def _(
     return (gdf_nutzung,)
 
 
-@app.cell
-def _():
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Export to SVG
+    ## Export to SVG / pipeline snapshots (edit mode only)
+
+    Skipped when the notebook runs as a **script** (e.g. `uv run etl.py` / tile CI).
+    Open with `marimo edit etl.py` to generate SVGs and stage snapshots locally.
     """)
     return
 
 
 @app.cell
-def _(CRS_CH, box, gpd, logging):
+def _(CRS_CH, box, gpd, logging, mo):
+    # Production tile builds only need landuse.geojson above; skip SVG helpers in script mode.
+    mo.stop(mo.app_meta().mode != "edit")
+
     def export_to_svg(gdf, output_path="landuse.svg", bounds=None, width=2000, height=None, stroke_width=0.5, stroke_color="#000000", target_crs=None):
         """
         Export GeoDataFrame to SVG with colors.
