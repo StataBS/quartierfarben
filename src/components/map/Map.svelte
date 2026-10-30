@@ -307,19 +307,29 @@
 
     /** Debounce heavy land-use aggregation + hash sync after pan/zoom/resize. */
     let landuseRecomputeTimer;
+    function drawLanduseWhenReady() {
+      if (!map?.getLayer("landuse")) return;
+      if (map.loaded()) {
+        drawAndCount(map);
+        return;
+      }
+      map.off("idle", drawLanduseWhenReady);
+      map.once("idle", drawLanduseWhenReady);
+    }
+
     function scheduleLanduseRecompute(delay) {
       clearTimeout(landuseRecomputeTimer);
       landuseRecomputeTimer = setTimeout(() => {
-        if (map?.loaded()) {
-          drawAndCount(map);
-          syncAnalysisUrlFromMap();
-        }
+        if (!map) return;
+        // Tile loads keep map.loaded() false right after a jump, so the URL
+        // has to update on its own. Land-use counts wait until tiles settle.
+        syncAnalysisUrlFromMap();
+        drawLanduseWhenReady();
       }, delay);
     }
 
     function syncAnalysisUrlFromMap() {
-      if (blockAnalysisHashSync) return;
-      if (!map?.loaded()) return;
+      if (blockAnalysisHashSync || !map?.isStyleLoaded()) return;
       const next = formatAnalysisHash(map);
       if (window.location.hash !== next) {
         window.history.replaceState(
