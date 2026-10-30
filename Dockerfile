@@ -26,6 +26,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8020
+# Honor HTTP(S)_PROXY and NO_PROXY from the deploy host. Unset, fetch stays direct.
+ENV NODE_USE_ENV_PROXY=1
 
 COPY --from=build /app/build ./build
 COPY server ./server
