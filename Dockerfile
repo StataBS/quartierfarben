@@ -15,12 +15,11 @@ COPY . .
 # BASE_PATH controls where the app is served (e.g. "/quartierfarben" or "").
 ARG BASE_PATH=""
 ENV BASE_PATH=${BASE_PATH}
-ARG API_KEY_MAPBS=""
-ENV API_KEY_MAPBS=${API_KEY_MAPBS}
 
 RUN bun run build
 
-# Stage 2 — Serve the static build (adapter-static → /app/build)
+# Stage 2 — Static files plus the search proxy (adapter-static → /app/build).
+# API_KEY_MAPBS is read from the container environment and is not part of the image.
 FROM node:24.22.1-alpine
 
 WORKDIR /app
@@ -28,13 +27,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8020
 
-RUN npm install -g serve@14.2.4
 COPY --from=build /app/build ./build
+COPY server ./server
 
 # Host-generated vector tiles are mounted here at runtime.
 VOLUME ["/app/build/tiles"]
 
 EXPOSE 8020
-# Do not use `serve -s`: missing /tiles/*.pbf would be rewritten to index.html,
-# and MapLibre then fails with "Unimplemented type: 4" while parsing HTML as MVT.
-CMD ["serve", "build", "-l", "8020"]
+# Missing /tiles/*.pbf must stay a 404. Rewriting them to index.html makes
+# MapLibre fail with "Unimplemented type: 4" while parsing HTML as MVT.
+CMD ["node", "server/index.mjs"]

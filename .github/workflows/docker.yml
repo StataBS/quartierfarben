@@ -46,7 +46,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             BASE_PATH=${{ vars.BASE_PATH }}
-            API_KEY_MAPBS=${{ secrets.API_KEY_MAPBS }}
 
   build-and-push-tiles:
     runs-on: ubuntu-latest

@@ -43,9 +43,8 @@ To deploy your app, simply copy the `build` folder to your web server.
 ## Running with Docker
 
 ```bash
-# App (optional build-args: API_KEY_MAPBS, BASE_PATH)
 docker build -t quartierfarben .
-docker run --rm -p 8020:8020 quartierfarben
+docker run --rm -p 8020:8020 --env-file .env quartierfarben
 
 # Tiles image (writes vector tiles to a mounted output dir)
 docker build -f Dockerfile.tiles -t quartierfarben-tiles .
@@ -57,7 +56,7 @@ On push to `main`, [`.github/workflows/docker.yml`](.github/workflows/docker.yml
 - `ghcr.io/statabs/quartierfarben` — app (`serve` on port **8020**)
 - `ghcr.io/statabs/quartierfarben/tiles` — ETL + tippecanoe
 
-Optional Actions config: repository secret `API_KEY_MAPBS`, variable `BASE_PATH`.
+Optional Actions config: variable `BASE_PATH`. The deploy host passes `API_KEY_MAPBS` in `.env`. The container adds that key when it calls GeoBS. The browser only talks to `/api/mapbs-search` and never receives the key. Do not rename it to `PUBLIC_API_KEY_MAPBS`.
 
 Deployment (`docker-compose`, schedules, host volumes) lives in the internal GitLab project, which pulls these images from GHCR.
 

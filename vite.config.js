@@ -4,6 +4,7 @@ import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig, loadEnv } from "vite";
 import KantonBSDesignsystemPlugin from "@kanton-basel-stadt/designsystem/vite";
+import { handleMapBsSearch, isMapBsSearchPath } from "./server/mapbsProxy.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,6 +13,24 @@ export default defineConfig(({ mode }) => {
   const env = {
     ...loadEnv(mode, repoRoot, ""),
     ...loadEnv(mode, __dirname, ""),
+  };
+  const apiKey = env.API_KEY_MAPBS ?? "";
+  const mapBsSearchProxy = {
+    name: "mapbs-search-proxy",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url ?? "/", "http://localhost");
+        if (!isMapBsSearchPath(url.pathname)) return next();
+        handleMapBsSearch(req, res, apiKey).catch(() => next());
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url ?? "/", "http://localhost");
+        if (!isMapBsSearchPath(url.pathname)) return next();
+        handleMapBsSearch(req, res, apiKey).catch(() => next());
+      });
+    },
   };
   return {
     /** One copy of Vite/Kit/Svelte — mixed versions break `$app/*` SSR resolution. */
@@ -48,12 +67,8 @@ export default defineConfig(({ mode }) => {
           },
         },
       }),
+      mapBsSearchProxy,
     ],
-    define: {
-      "import.meta.env.PUBLIC_API_KEY_MAPBS": JSON.stringify(
-        env.API_KEY_MAPBS ?? env.PUBLIC_API_KEY_MAPBS ?? "",
-      ),
-    },
     build: {
       chunkSizeWarningLimit: 1300,
     },

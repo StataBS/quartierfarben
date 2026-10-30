@@ -1,17 +1,8 @@
-/** Kanton Basel-Stadt Search API (api.geo.bs.ch/search/v2). */
+/** Address search via the same-origin proxy. The MapBS key stays on the server. */
+import { resolve } from "$app/paths";
 import coordinates, { LV95, WGS84 } from "@swissgeo/coordinates";
 
-const MAP_BS_SEARCH = "https://api.geo.bs.ch/search/v2/search";
-
-/**
- * Read API key injected at build time (see `vite.config.js`: `API_KEY_MAPBS` from repo root `.env`).
- * @returns {string}
- */
-export function getMapBsApiKey() {
-  return typeof import.meta.env.PUBLIC_API_KEY_MAPBS === "string"
-    ? import.meta.env.PUBLIC_API_KEY_MAPBS
-    : "";
-}
+const SEARCH_PATH = "/api/mapbs-search";
 
 /**
  * @param {string} wkt
@@ -41,19 +32,16 @@ export function wgs84FromLv95Wkt(wkt) {
 
 /**
  * @param {string} term
- * @param {string} apiKey
  * @param {{ limit?: number }} [opts]
  * @returns {Promise<Array<{ display_name: string, lon: number, lat: number, layer_name?: string }>>}
  */
-export async function searchMapBs(term, apiKey, opts = {}) {
+export async function searchMapBs(term, opts = {}) {
   const limit = opts.limit ?? 15;
   const q = term?.trim();
-  if (!apiKey || !q) return [];
+  if (!q || typeof window === "undefined") return [];
 
-  const url = new URL(MAP_BS_SEARCH);
+  const url = new URL(resolve(SEARCH_PATH.slice(1)), window.location.origin);
   url.searchParams.set("term", q);
-  url.searchParams.set("outputformat", "geom");
-  url.searchParams.set("apikey", apiKey);
 
   let data;
   try {
