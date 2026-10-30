@@ -1,5 +1,5 @@
 # Pin Node >=24.22.1 for CVE-2026-111497 (Brotli / Node2Shell).
-FROM node:24.22.1-alpine AS build
+FROM node:26.13.0-alpine AS build
 
 RUN apk add --no-cache git ca-certificates && update-ca-certificates
 # Pin Bun >=1.4.4 for the same Brotli decoder CVE.
@@ -20,7 +20,7 @@ RUN bun run build
 
 # Stage 2 — Static files plus the search proxy (adapter-static → /app/build).
 # API_KEY_MAPBS is read from the container environment and is not part of the image.
-FROM node:24.22.1-alpine
+FROM node:26.13.0-alpine
 
 WORKDIR /app
 
