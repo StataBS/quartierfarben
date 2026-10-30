@@ -177,7 +177,7 @@ The **[opendatabs/quartierfarben](https://github.com/opendatabs/quartierfarben)*
 
 ### Geocoding (address search)
 
-**This deployment (Kanton Basel-Stadt)** uses the canton’s [Search / Suchdienst API](https://api.geo.bs.ch/search/v1/) ([documentation](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/api#suchdienst)).
+**This deployment (Kanton Basel-Stadt)** uses the canton’s [Search / Suchdienst API](https://api.geo.bs.ch/search/v2/) ([documentation](https://www.bs.ch/bvd/grundbuch-und-vermessungsamt/geo/geodaten/api#suchdienst)).
 
 ### Analysis (circle) & neighbourhood name
 

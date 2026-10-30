@@ -1,7 +1,7 @@
-/** Kanton Basel-Stadt Search API (api.geo.bs.ch/search/v1). */
+/** Kanton Basel-Stadt Search API (api.geo.bs.ch/search/v2). */
 import coordinates, { LV95, WGS84 } from "@swissgeo/coordinates";
 
-const MAP_BS_SEARCH = "https://api.geo.bs.ch/search/v1/search";
+const MAP_BS_SEARCH = "https://api.geo.bs.ch/search/v2/search";
 
 /**
  * Read API key injected at build time (see `vite.config.js`: `API_KEY_MAPBS` from repo root `.env`).
