@@ -488,9 +488,9 @@
   integrity sha512-E7xCFVEEm5Ctnj2udTJy1b9oaTvjz1zi1mYdEtE8rB5BVwq6kHisosDS+zdWN5PMfEMjtbsOV9Cl6tsNSAD1sA==
 
 "@netlify/types@^3.0.0":
-  version "3.3.0"
-  resolved "https://registry.npmjs.org/@netlify/types/-/types-3.3.0.tgz"
-  integrity sha512-u/uh0vOFslJsTcG8nnynAKnTpVIakXbv3mkBG9DTqKZrDEzmfLKDZ3I7evHA3/CYUmNB24pNrzlHj2nIsqEwzg==
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/@netlify/types/-/types-3.3.1.tgz#bfa21c44b901e273215d72220fe68c4235c7c9a5"
+  integrity sha512-LwPy3VpwMTETniJEgLr67yP8Rt8eORZaQ/NwVXhOOkv9q1F2SANSoJbfkhEmyLpwQ/aoPTAi0bULBDlFHXwEQA==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -630,10 +630,10 @@
   resolved "https://registry.npmjs.org/@sveltejs/adapter-auto/-/adapter-auto-9.0.0.tgz"
   integrity sha512-AV89HWxrAWoT6/TmuALWcLookGPmIsv1mDIxKORRvf0fjHWr9qX753FU/xPFh9fsmF84abrvK79Czr5HmIIPhw==
 
-"@sveltejs/adapter-netlify@^7.0.1":
-  version "7.0.1"
-  resolved "https://registry.npmjs.org/@sveltejs/adapter-netlify/-/adapter-netlify-7.0.1.tgz"
-  integrity sha512-TJDKown4i+KiK7E1sSRiPAoHnpMlwSXAwehUVNPiwK69dwbnCQ6hKurYQwP+e3d+82X1v/Cs47BGH6Vg0dNZ6A==
+"@sveltejs/adapter-netlify@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@sveltejs/adapter-netlify/-/adapter-netlify-7.1.0.tgz#8a23711723e306d605ce5648d5455c7a98368c82"
+  integrity sha512-j1LMnIrYVIQLsiXG7fbKoZC8zMhWvXT3Bgb3ibp5v24VvLYh7eRo/7a26Xi5Lco6ytwy6i2DqTc62rqJ4qokSw==
   dependencies:
     "@netlify/types" "^3.0.0"
     rolldown "^1.2.3"
